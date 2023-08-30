@@ -1,0 +1,14 @@
+Message:
+Welcome to OpenSea!
+
+Click to sign in and accept the OpenSea Terms of Service: https://opensea.io/tos
+
+This request will not trigger a blockchain transaction or cost any gas fees.
+
+Your authentication status will reset after 24 hours.
+
+Wallet address:
+0xcc8e8638f1870148cf3b11ff8e9d10a6ca607780
+
+Nonce:
+353037
