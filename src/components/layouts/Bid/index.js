@@ -80,12 +80,12 @@ const Bid = ({ className = "", onOk, show, onHide, nft = {} }) => {
           You are about to purchase <strong>{nft && nft.name}</strong>
         </div>
         <div className={styles.stage}>Your bid </div>
-        {nft && nft.bids.length > 0 && (
+        {nft && nft.bids?.length > 0 && (
           <div className={styles.stageBid}>{`( Current Max bid : ${Number(
-            nft.bids[nft.bids.length - 1].price
+            nft.bids[nft.bids?.length - 1].price
           )} ${chains[nft?.chainId || 1]?.currency || "ETH"})`}</div>
         )}
-        {nft && nft.bids.length === 0 && (
+        {nft && nft.bids?.length === 0 && (
           <div className={styles.stageBid}>{`( Started price : ${Number(
             nft.price
           )} ${chains[nft?.chainId || 1]?.currency || "ETH"})`}</div>
@@ -103,7 +103,7 @@ const Bid = ({ className = "", onOk, show, onHide, nft = {} }) => {
             />
           </div>
           {priceIsInvalid === true ? (
-            <span style={{ color: "red", fontSize: "15px"}}>{warningStr}</span>
+            <span style={{ color: "red", fontSize: "15px" }}>{warningStr}</span>
           ) : (
             <span style={{ color: "green" }}>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;

@@ -35,6 +35,7 @@ import { BACKEND_URL, ipfsUrl } from "../config";
 import isEmpty from "../utilities/isEmpty";
 
 import avt from "../assets/images/avatar/avt.png";
+import CardNFT from "../components/layouts/CardNFT";
 
 var socket = io(`${BACKEND_URL}`);
 
@@ -433,77 +434,7 @@ const Author = () => {
                                   key={index}
                                   className="col-xl-3 col-lg-4 col-md-6 col-12"
                                 >
-                                  <div className="sc-card-product explode ">
-                                    <div className="card-media">
-                                      <Link to={`/item-details/${data._id}`}>
-                                        <img
-                                          src={`${ipfsUrl}${data?.logoURL}`}
-                                          alt="NFT"
-                                        />
-                                      </Link>
-                                      <div className="button-place-bid ">
-                                        <button
-                                          onClick={() => setModalShow(true)}
-                                          className="sc-button style-place-bid style bag fl-button pri-3"
-                                        >
-                                          <span>Place Bid</span>
-                                        </button>
-                                      </div>
-                                      <Link className="wishlist-button heart">
-                                        <span className="number-like">
-                                          {isliked ? "" : "0"}
-                                        </span>
-                                      </Link>
-                                    </div>
-                                    <div className="card-title mg-bt-16">
-                                      <h5>
-                                        <Link to={`/item-details/${data._id}`}>
-                                          "{data?.description}"
-                                        </Link>
-                                      </h5>
-                                    </div>
-                                    <div className="meta-info">
-                                      <div className="author">
-                                        <div className="avatar">
-                                          <img
-                                            src={`${ipfsUrl}${
-                                              detailedUserInfo?.avatar
-                                                ? detailedUserInfo?.avatar
-                                                : avt
-                                            }`}
-                                            alt="Avatar"
-                                          />
-                                        </div>
-                                        <div className="info">
-                                          <span>Creator</span>
-                                          <h6>
-                                            <Link to="/author">
-                                              {data.name}
-                                            </Link>
-                                          </h6>
-                                        </div>
-                                      </div>
-                                      {/* <div className="tags">{data.tags}</div> */}
-                                      <div className="stock">
-                                        {data?.stockAmount || 1} in stock
-                                      </div>
-                                    </div>
-                                    <div className="card-bottom style-explode">
-                                      <div className="price">
-                                        <span>Current Bid</span>
-                                        <div className="price-details">
-                                          <h5>{data.price} ETH</h5>
-                                          <span>= {data.priceChange}</span>
-                                        </div>
-                                      </div>
-                                      {/* <Link
-                                    to="/activity-01"
-                                    className="view-history reload"
-                                  >
-                                    View History
-                                  </Link> */}
-                                    </div>
-                                  </div>
+                                  <CardNFT item={data}></CardNFT>
                                 </div>
                               ))}
                             {visible < item.dataContent.length && (

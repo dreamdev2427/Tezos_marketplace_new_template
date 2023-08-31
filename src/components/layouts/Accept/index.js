@@ -19,7 +19,7 @@ const Accept = ({ className = "", show, onOk, onHide, nft = {} }) => {
         {nft ? (
           <div className={styles.stage}>
             {Number(
-              nft.bids.length > 0 && nft.bids[nft.bids.length - 1].price
+              nft.bids?.length > 0 && nft.bids[nft.bids?.length - 1].price
             ).toFixed(4)}{" "}
             {chains[nft?.chainId || 1]?.currency || "ETH"} for 1 item
           </div>

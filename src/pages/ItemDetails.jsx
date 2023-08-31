@@ -608,6 +608,7 @@ const ItemDetails = () => {
     }
   };
 
+  console.log(globalOwnHistoryOfNFT)
   return (
     <div className="item-details">
       <Header />
@@ -1052,10 +1053,10 @@ const ItemDetails = () => {
                                                 {item?.owner.nickname}{" "}
                                               </Link>
                                             </h6>{" "}
-                                            <span>Owned by </span>
+                                            <span>Owned</span>
                                           </div>
                                           <span className="time">
-                                            {item.time}
+                                            {item?.owner.createdAt}
                                           </span>
                                         </div>
                                       </div>
