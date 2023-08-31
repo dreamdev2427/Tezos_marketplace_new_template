@@ -7,16 +7,13 @@ import Header from "../components/header/Header";
 import Footer from "../components/footer/Footer";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 
-
 import {
   changeDetailedCollection,
   selectDetailedCollection,
 } from "../redux/reducers/collection.reducers";
-import {
-  selectCurrentUser,
-} from "../redux/reducers/auth.reducers";
-
-import { BACKEND_URL, ipfsUrl, chains } from "../config";
+import { selectCurrentUser } from "../redux/reducers/auth.reducers";
+import { selectETHPrice } from "../redux/reducers/nft.reducers.ts";
+import { BACKEND_URL, ipfsUrl, chains, TEZOS_CHAIN_ID } from "../config";
 import isEmpty from "../utilities/isEmpty";
 
 import avt from "../assets/images/avatar/avt.png";
@@ -26,6 +23,7 @@ const CollectionItems = () => {
 
   const dispatch = useAppDispatch();
 
+  const globalETHPrice = useAppSelector(selectETHPrice);
   const currentUsr = useAppSelector(selectCurrentUser);
   const collection = useAppSelector(selectDetailedCollection);
 
@@ -89,7 +87,6 @@ const CollectionItems = () => {
     itemsOfCollectionList();
   }, [collectionId]);
 
-
   return (
     <div className="authors-2">
       <Header />
@@ -99,14 +96,14 @@ const CollectionItems = () => {
             <div
               className="author-profile flex"
               style={{
-                background: `url(${ipfsUrl}${
+                background: `url(${collection?.bannerURL && ipfsUrl}${
                   collection?.bannerURL ? collection?.bannerURL : "inherit"
                 })`,
               }}
             >
               <div className="feature-profile">
                 <img
-                  src={`${ipfsUrl}${
+                  src={`${collection?.logoURL && ipfsUrl}${
                     collection?.logoURL ? collection?.logoURL : avt
                   }`}
                   alt="Axies"
@@ -124,13 +121,18 @@ const CollectionItems = () => {
                 </span>
                 <br />
                 <span>
-                  {collection && collection.price
-                    ? "Floor price : " +
-                      collection.price +
-                      chains[collection?.chainId]?.currency
-                    : "Floor price : 0 " +
-                      <b>{chains[collection?.chainId]?.currency}</b>}
+                  Floor price:{" "}
+                  {collection.price ? (
+                    <b>
+                      {collection.price} {chains[collection?.chainId]?.currency}
+                    </b>
+                  ) : (
+                    <b>
+                      0 <b>{chains[collection?.chainId]?.currency}</b>
+                    </b>
+                  )}
                 </span>
+
                 <p>{collection && collection.description}</p>
               </div>
 
@@ -138,7 +140,7 @@ const CollectionItems = () => {
                 {currentUsr && currentUsr?._id === collection?.owner?._id && (
                   <div className="btn-profile">
                     <Link
-                      to={"/create-item"}
+                      to={"/createCollection"}
                       className="sc-button style-1 follow"
                     >
                       Create
@@ -157,8 +159,12 @@ const CollectionItems = () => {
                     >
                       <div className="sc-card-product explode ">
                         <div className="card-media">
-                          <Link to="/item-details-01">
-                            <img src={`${ipfsUrl}${data?.logoURL}`} alt="NFT" />
+                          <Link to={`/item-details/${data._id}`}>
+                            <img
+                              src={`${ipfsUrl}${data?.logoURL}`}
+                              alt="NFT"
+                              style={{ height: "250px", objectFit: "cover" }}
+                            />
                           </Link>
                         </div>
                         <div className="card-title mg-bt-16">
@@ -173,11 +179,10 @@ const CollectionItems = () => {
                             <div className="avatar">
                               <img
                                 src={`${ipfsUrl}${
-                                  data?.logoURL
-                                    ? data?.logoURL
-                                    : avt
+                                  data?.logoURL ? data?.logoURL : avt
                                 }`}
                                 alt="Avatar"
+                                style={{ height: "100%", width:"100%", objectFit: "cover" }}
                               />
                             </div>
                             <div className="info">
@@ -195,8 +200,20 @@ const CollectionItems = () => {
                           <div className="price">
                             <span>Current Bid</span>
                             <div className="price-details">
-                              <h5>{data.price} ETH</h5>
-                              <span>= {data.priceChange}</span>
+                              <h5>
+                                {`${data?.price || 0} ${
+                                  chains[data?.chainId || 1]?.currency || "ETH"
+                                } `}
+                              </h5>
+                              <span>
+                                = ${" "}
+                                {(
+                                  data?.price *
+                                  (data?.chainId === TEZOS_CHAIN_ID
+                                    ? 0.79
+                                    : globalETHPrice)
+                                )?.toFixed(2) || 0}
+                              </span>
                             </div>
                           </div>
                         </div>

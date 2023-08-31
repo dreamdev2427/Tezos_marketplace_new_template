@@ -36,7 +36,7 @@ import isEmpty from "../utilities/isEmpty";
 
 import avt from "../assets/images/avatar/avt.png";
 
-// var socket = io(`${BACKEND_URL}`);
+var socket = io(`${BACKEND_URL}`);
 
 const Author = () => {
   const { userId } = useParams(); //taget_id in making follow
@@ -315,18 +315,18 @@ const Author = () => {
     setPanelTab(updatedPanelTab);
   }, [collectedItems, createdItems, likedItems, followingAuthors, followers]);
 
-    //  useEffect(() => {
-  //   socket.on("UpdateStatus", (data: any) => {
-  //     console.log(data);
-  //     getDetailedUserInfo(
-  //       userId || "",
-  //       (userId || "") === (currentUsr?._id || "")
-  //     );
-  //     getFollowList(userId || "", 10);
-  //     getFollowingList(userId || "", 10);
-  //     getIsExists(currentUsr?._id || "", userId || "");
-  //   });
-  // }, []);
+  useEffect(() => {
+    socket.on("UpdateStatus", (data) => {
+      console.log(data);
+      getDetailedUserInfo(
+        userId || "",
+        (userId || "") === (currentUsr?._id || "")
+      );
+      getFollowList(userId || "", 10);
+      getFollowingList(userId || "", 10);
+      getIsExists(currentUsr?._id || "", userId || "");
+    });
+  }, []);
 
   // console.log(panelTab);
 
@@ -339,7 +339,7 @@ const Author = () => {
             <div className="author-profile flex">
               <div className="feature-profile">
                 <img
-                  src={`${ipfsUrl}${
+                  src={`${detailedUserInfo?.avatar && ipfsUrl}${
                     detailedUserInfo?.avatar ? detailedUserInfo?.avatar : avt
                   }`}
                   alt="Axies"
@@ -406,7 +406,7 @@ const Author = () => {
                   >
                     {isliked ? "Following" : "Follow"}
                   </Link>
-                </div>  
+                </div>
               </div>
             </div>
             <Tabs
@@ -435,7 +435,7 @@ const Author = () => {
                                 >
                                   <div className="sc-card-product explode ">
                                     <div className="card-media">
-                                      <Link to="/item-details-01">
+                                      <Link to={`/item-details/${data._id}`}>
                                         <img
                                           src={`${ipfsUrl}${data?.logoURL}`}
                                           alt="NFT"

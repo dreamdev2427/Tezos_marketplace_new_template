@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import Spinner from "react-bootstrap/Spinner";
-import {useParams, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 import { useAppDispatch, useAppSelector } from "../../../redux/hooks";
 
@@ -12,6 +11,7 @@ import {
   selectConllectionList,
 } from "../../../redux/reducers/collection.reducers";
 import { selectCurrentUser } from "../../../redux/reducers/auth.reducers";
+import Spinner from "../../Spinner/Spinner";
 
 const LiveAuction = () => {
   const dispatch = useAppDispatch();
@@ -50,40 +50,33 @@ const LiveAuction = () => {
 
   return (
     <section className="tf-section live-auctions">
-      {loader ? (
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </Spinner>
-      ) : (
-        <div className="themesflat-container">
-          <div className="row">
-            <div className="col-md-12">
-              <h2 className="tf-title-heading style-1 ct">{category}</h2>
-            </div>
-            {collections.length >= 0 ? (
-              collections
-                .slice(0, visible)
-                .map((item, index) => (
-                  <LiveAuctionItem key={index} item={item} />
-                ))
-            ) : (
-              <h4>No {category} Category Items Found</h4>
-            )}
-            {visible < collections.length && (
-              <div className="col-md-12 wrap-inner load-more text-center">
-                <Link
-                  to="#"
-                  id="load-more"
-                  className="sc-button loadmore fl-button pri-3"
-                  onClick={showMoreItems}
-                >
-                  <span>Load More</span>
-                </Link>
-              </div>
-            )}
+      <Spinner isLoading={loader} />
+      <div className="themesflat-container">
+        <div className="row">
+          <div className="col-md-12">
+            <h2 className="tf-title-heading style-1 ct">{category}</h2>
           </div>
+          {collections.length >= 0 ? (
+            collections
+              .slice(0, visible)
+              .map((item, index) => <LiveAuctionItem key={index} item={item} />)
+          ) : (
+            <h4>No {category} Category Items Found</h4>
+          )}
+          {visible < collections.length && (
+            <div className="col-md-12 wrap-inner load-more text-center">
+              <Link
+                to="#"
+                id="load-more"
+                className="sc-button loadmore fl-button pri-3"
+                onClick={showMoreItems}
+              >
+                <span>Load More</span>
+              </Link>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </section>
   );
 };

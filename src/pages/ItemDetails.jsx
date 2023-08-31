@@ -59,8 +59,11 @@ import isEmpty from "../utilities/isEmpty";
 
 import Categories from "../components/layouts/Categories";
 import avt from "../assets/images/avatar/avt.png";
+import CardModal from "../components/layouts/CardModal";
+import Checkout from "../components/layouts/Checkout";
+import Spinner from "../components/Spinner/Spinner";
 
-// var socket = io(`${BACKEND_URL}`);
+var socket = io(`${BACKEND_URL}`);
 
 const ItemDetails = () => {
   const navigate = useNavigate();
@@ -75,6 +78,7 @@ const ItemDetails = () => {
   const globalChainId = useAppSelector(selectCurrentChainId);
   const globalProvider = useAppSelector(selectGlobalProvider);
   const globalOwnHistoryOfNFT = useAppSelector(selectOwnHistoryOfAnItem);
+  const globalAccount = useAppSelector(selectCurrentWallet);
 
   const [visibleModalPurchase, setVisibleModalPurchase] = useState(false);
   const [visibleModalBid, setVisibleModalBid] = useState(false);
@@ -85,8 +89,11 @@ const ItemDetails = () => {
   const [refresh, setRefresh] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [sysTime, setSysTime] = useState(0);
+  const [loader, setLoader] = useState(false);
 
   const getNftDetail = async (id) => {
+    setLoader(true);
+
     await axios
       .post(
         `${BACKEND_URL}/api/item/get_detail`,
@@ -137,6 +144,7 @@ const ItemDetails = () => {
         dispatch(changeItemOwnHistory(result.data.data || []));
       })
       .catch(() => {});
+    setLoader(false);
   };
 
   const checkIsLiked = () => {
@@ -152,16 +160,16 @@ const ItemDetails = () => {
   useEffect(() => {
     getNftDetail(itemId || "");
     checkIsLiked();
-    // socket.on("UpdateStatus", (data) => {
-    //   if (itemId) {
-    //     if (data?.type === "BURN_NFT" && data?.data?.itemId === itemId) {
-    //       navigate(`/collectionItems/${data?.data?.colId}`);
-    //       return;
-    //     }
+    socket.on("UpdateStatus", (data) => {
+      if (itemId) {
+        if (data?.type === "BURN_NFT" && data?.data?.itemId === itemId) {
+          navigate(`/collectionItems/${data?.data?.colId}`);
+          return;
+        }
 
-    //     getNftDetail(itemId || "");
-    //   }
-    // });
+        getNftDetail(itemId || "");
+      }
+    });
   }, [itemId, currentUsr]);
 
   //get system time
@@ -315,10 +323,96 @@ const ItemDetails = () => {
     setProcessing(false);
   };
 
+  const savelistItem = (id, price, auctionPeroid) => {
+    axios
+      .post(`${BACKEND_URL}/api/item/putOnSale`, {
+        itemId: id,
+        price: price,
+        period: auctionPeroid,
+      })
+      .then((response) => {
+        if (response.data.code === 0) {
+          console.log(response.data.data);
+          toast.success("Succeed in listing an item.");
+        } else toast.error("Server side error");
+      })
+      .catch((error) => {
+        toast.error("Server side error");
+      });
+  };
+
+  // put on sale
+  const onPutSale = async (price, instant, period) => {
+    setVisibleModalSale(false);
+    var aucperiod = instant === true ? 0 : period;
+    if (Number(price) <= 0 || isNaN(price)) {
+      toast.error("Invalid price.");
+      return;
+    }
+
+    setProcessing(true);
+    let checkResut = await checkWalletAddrAndChainId();
+    if (!checkResut) {
+      setProcessing(false);
+      return;
+    }
+
+    if (globalDetailNFT?.chainId === TEZOS_CHAIN_ID) {
+      let txResult = await listTezosNFT({
+        Tezos: tezosInstance,
+        id: globalDetailNFT?.tokenId,
+        sender: globalAccount,
+        contract: globalDetailNFT?.collection_id?.contract,
+        price: price,
+        instant: instant,
+        auction: aucperiod * 24 * 3600,
+      });
+      if (txResult == -1) {
+        toast.error("Transaction Failed");
+        setProcessing(false);
+        return;
+      }
+      savelistItem(itemId, price, aucperiod * 24 * 3600);
+      setProcessing(false);
+      getNftDetail(globalDetailNFT?._id);
+      return;
+    }
+
+    let result = await setApproveForAll(
+      new Web3(globalProvider),
+      currentUsr?.address,
+      chains[globalDetailNFT?.chainId]?.platformContractAddress || "",
+      globalDetailNFT?.chainId || 1
+    );
+    if (result.success === true) toast.success(result.message);
+    if (result.success === false) {
+      toast.error(result.message);
+      setProcessing(false);
+      return;
+    }
+    result = await singleMintOnSale(
+      new Web3(globalProvider),
+      currentUsr?.address,
+      itemId,
+      aucperiod * 24 * 3600,
+      price,
+      0,
+      globalDetailNFT?.chainId || 1
+    );
+    if (result.success === true) {
+      toast.success(result.message);
+
+      getNftDetail(globalDetailNFT?._id);
+    } else toast.error(result.message);
+    setProcessing(false);
+  };
+
+  
   return (
     <div className="item-details">
       <Header />
       <div className="tf-section tf-item-details">
+      <Spinner isLoading={loader} />
         <div className="themesflat-container">
           <div className="row">
             <div className="col-xl-6 col-md-12">
@@ -330,6 +424,7 @@ const ItemDetails = () => {
                         ? `${ipfsUrl}${globalDetailNFT?.logoURL}`
                         : ""
                     }
+                    style={{height:"500px", width:"100%", objectFit:"cover"}}
                     alt="Avatar"
                   />
                 </div>
@@ -338,7 +433,7 @@ const ItemDetails = () => {
             <div className="col-xl-6 col-md-12">
               <div className="content-right">
                 <div className="sc-item-details">
-                  <h2 className="style2">“{globalDetailNFT?.name}”</h2>
+                  <h2 className="style2">{globalDetailNFT?.name}</h2>
                   <div className="meta-item">
                     <div className="left">
                       <span className="viewed eye">0</span>
@@ -726,6 +821,11 @@ const ItemDetails = () => {
           </div>
         </div>
       </div>
+      <Checkout
+        onOk={onPutSale}
+        show={visibleModalSale}
+        onHide={() => setVisibleModalSale(false)}
+      />
       <Categories />
       <Footer />
     </div>

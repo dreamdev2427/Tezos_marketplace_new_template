@@ -12,7 +12,7 @@ import {
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../redux/reducers/auth.reducers";
 import avt from "../../assets/images/avatar/avt.png";
-
+import Spinner from "../Spinner/Spinner";
 
 const socket = io(`${BACKEND_URL}`);
 
@@ -33,9 +33,11 @@ const TopBuyer = () => {
   const [date, setDate] = useState(sortOrder[0]);
   const [direction, setDirection] = useState(directionOptions[0]);
   const [items, setItems] = useState([]);
+  const [loader, setLoader] = useState(false);
 
   const getPopularUserList = (time, limit) => {
     // time : timeframe, 0: all, 1: today, 2: this month, 3: 3 months, 4: year
+    setLoader(true);
 
     axios
       .post(
@@ -53,6 +55,7 @@ const TopBuyer = () => {
       .catch((error) => {
         // console.log("error:", error);
       });
+    setLoader(false);
   };
 
   useEffect(() => {
@@ -74,27 +77,27 @@ const TopBuyer = () => {
   useEffect(() => {
     setUserList();
   }, [popular, direction]);
-  
+
   const setUserList = () => {
     if (popular) {
       if (direction === "Sellers") {
-        setItems((popular).seller);
+        setItems(popular.seller);
       } else {
-        setItems((popular).buyer);
+        setItems(popular.buyer);
       }
     }
-  }
+  };
 
-  console.log(items);
   return (
     <section className="tf-section top-seller bg-home-3">
       <div className="themesflat-container">
         <div className="row">
           <div className="col-md-12">
             <div className="">
-              <h2 className="tf-title style2">Top Seller</h2>
-              <div className="heading-line s1"></div>
+              <h2 className="tf-title style2  mb-4">Top Seller</h2>
+              {/* <div className="heading-line s1"></div> */}
             </div>
+            <Spinner isLoading={loader} />
           </div>
           {items &&
             items.length > 0 &&
@@ -112,9 +115,13 @@ const TopBuyerItem = (props) => (
     <div className="sc-author-box">
       <div className="author-avatar">
         <Link to={`/author/${props.item._id}`}>
-          <img 
-          src={`${props.item.avatar && ipfsUrl}${props.item.avatar ? props.item.avatar : avt }`}
-          alt="avatar" className="avatar" />
+          <img
+            src={`${props.item.avatar && ipfsUrl}${
+              props.item.avatar ? props.item.avatar : avt
+            }`}
+            alt="avatar"
+            className="avatar"
+          />
         </Link>
         <div className="badge">
           <i className="ripple"></i>

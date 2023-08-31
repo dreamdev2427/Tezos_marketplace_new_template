@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import Web3 from "web3";
 import { toast } from "react-toastify";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "../components/header/Header";
@@ -8,49 +9,111 @@ import "react-tabs/style/react-tabs.css";
 import img1 from "../assets/images/box-item/image-box-6.jpg";
 import { useAppDispatch, useAppSelector } from "../redux/hooks.ts";
 import isEmpty from "../utilities/isEmpty";
-import { BACKEND_URL, CATEGORIES } from "../config";
+import {
+  BACKEND_URL,
+  FILE_TYPE,
+  TEZOS_CHAIN_ID,
+  chains,
+  ipfsUrl,
+} from "../config";
 import {
   selectCurrentChainId,
   selectCurrentUser,
+  selectCurrentWallet,
+  selectDetailedUser,
+  selectGlobalProvider,
   selectTezosInstance,
   selectWalletStatus,
 } from "../redux/reducers/auth.reducers";
-import { changeConsideringCollectionId } from "../redux/reducers/collection.reducers";
+import {
+  changeTradingResult,
+  selectCurrentTradingResult,
+} from "../redux/reducers/nft.reducers";
+import {
+  changeCollectionList,
+  CollectionData,
+  selectConllectionList,
+  selectConsideringCollectionId,
+} from "../redux/reducers/collection.reducers";
 import { pinFileToIPFS, pinJSONToIPFS } from "../utils/pinatasdk";
-import { createTezosCollection } from "../InteractWithSmartContract/tezosInteracts";
-
+import {
+  mintTezosNFT,
+  tezosconfig,
+} from "../InteractWithSmartContract/tezosInteracts";
+import {
+  batchMintOnSale,
+  singleMintOnSale,
+} from "../InteractWithSmartContract/interact";
+import Form from "react-bootstrap/Form";
 
 const CreateItem = () => {
-  const categoriesOptions = CATEGORIES;
+  const [sale, setSale] = useState(false);
+  const [colls, setColls] = useState([]);
 
-  const [selectedAvatarFile, setSelectedAvatarFile] = useState(null);
-  const [selectedBannerFile, setSelectedBannerFile] = useState(null);
+  const [selectedFileName, setSelectedFileName] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [selected, setSelected] = useState({
+    name: "",
+    _id: "",
+    items: [],
+    contract: "",
+  });
   const [logoImg, setLogoImg] = useState("");
-  const [bannerImg, setBannerImg] = useState("");
   const [textName, setTextName] = useState("");
   const [textDescription, setTextDescription] = useState("");
-  const [categories, setCategories] = useState(categoriesOptions[0]);
-  const [floorPrice, setFloorPrice] = useState(0);
-  const [metaFieldInput, setMetaFieldInput] = useState("");
-  const [metaFields, setMetaFields] = useState([]);
-  const [metaFieldDatas, setMetaFieldDatas] = useState([]);
-  const [metaArry, setMetaArray] = useState([]);
-  const [removeField, setRemoveField] = useState(false);
-  const [consideringField, setConsideringField] = useState("");
-  const [consideringFieldIndex, setConsideringFieldIndex] = useState(0);
-  const [alertParam, setAlertParam] = useState({});
+  const [period, setPeriod] = useState(0);
+  const [timeLength, setTimeLength] = useState(0);
+  const [auction, setAuction] = useState(false);
+  const [auctionEndTime, setAuctionEndTime] = useState(new Date());
+
+  const [stockAmount, setStockAmount] = useState(1);
+  const [price, setPrice] = useState(0);
   const [working, setWorking] = useState(false);
-  const [constractAddress, setContractAddress] = useState("");
-  const [visible, setVisible] = useState(false);
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
+  const consideringCollectionId = useAppSelector(selectConsideringCollectionId);
   const currentUsr = useAppSelector(selectCurrentUser);
-  const currentChainId = useAppSelector(selectCurrentChainId);
+  const globalAddress = useAppSelector(selectCurrentWallet);
+  const detailedUserInfo = useAppSelector(selectDetailedUser);
+  const collections = useAppSelector(selectConllectionList);
+  const tradingResult = useAppSelector(selectCurrentTradingResult);
   const walletStatus = useAppSelector(selectWalletStatus);
+  const globalProvider = useAppSelector(selectGlobalProvider);
+  const currentChainId = useAppSelector(selectCurrentChainId);
   const tezosInstance = useAppSelector(selectTezosInstance);
 
+  useEffect(() => {
+    if (currentUsr?._id) {
+      axios
+        .post(
+          `${BACKEND_URL}/api/collection/getUserCollections`,
+          {
+            limit: 90,
+            userId: currentUsr?._id,
+            chainId: currentChainId,
+          },
+          {
+            headers: {
+              "x-access-token": localStorage.getItem("jwtToken"),
+            },
+          }
+        )
+        .then((result) => {
+          dispatch(changeCollectionList(result.data.data));
+        })
+        .catch((err) => {
+          console.log("error getting collections : ", err);
+        });
+    }
+  }, [currentUsr, currentChainId, dispatch]);
+
+  useEffect(() => {
+    if (currentChainId === TEZOS_CHAIN_ID) {
+      setSale(true);
+    }
+  }, [currentChainId]);
   useEffect(() => {
     //check the current user, if ther user is not exists or not verified, go back to the home
     if (isEmpty(currentUsr)) {
@@ -59,194 +122,349 @@ const CreateItem = () => {
         navigate("/login");
       }, 1500);
     }
+    if (
+      !isEmpty(detailedUserInfo) &&
+      !isEmpty(detailedUserInfo?.verified) &&
+      !detailedUserInfo?.verified
+    ) {
+      toast.warn("Please contact to dev team and get verified.");
+      setTimeout(() => {
+        navigate("/");
+      }, 1500);
+    }
   }, []);
 
-  const changeBanner = (event) => {
-    var file = event.target.files[0];
-    if (file == null) return;
-    console.log(file);
-    setSelectedBannerFile(file);
-    let reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      setBannerImg(reader.result);
-    };
-    reader.onerror = function (error) {};
-  };
+  useEffect(() => {
+    if (collections && collections.length >= 0) {
+      let tempOptions = [];
+      collections.map((coll, index) =>
+        tempOptions.push({
+          _id: coll?._id || "",
+          name: coll?.name || "",
+          bannerURL: coll?.bannerURL || "",
+          items: coll?.items || [],
+          contract: coll?.contract || "",
+        })
+      );
+      setColls(tempOptions);
+    }
+  }, [collections]);
+
+  useEffect(() => {
+    if (tradingResult) {
+      switch (tradingResult.function) {
+        default:
+          break;
+        case "singleMintOnSale":
+          dispatch(
+            changeTradingResult({ function: "", success: false, message: "" })
+          );
+          if (tradingResult.success === false)
+            toast.error(tradingResult.message);
+          break;
+        case "batchMintOnSale":
+          dispatch(
+            changeTradingResult({ function: "", success: false, message: "" })
+          );
+          if (tradingResult.success === false)
+            toast.error(tradingResult.message);
+          break;
+      }
+    }
+  }, [tradingResult]);
 
   const changeAvatar = (event) => {
     var file = event.target.files[0];
     if (file == null) return;
     console.log(file);
-    setSelectedAvatarFile(file);
+    if (file.size > 2 * 1024 * 1024) {
+      toast.warn("Image file size should be less than 2MB");
+      return;
+    }
+    setSelectedFile(file);
+    setSelectedFileName(file.name);
     let reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => {
-      setLogoImg(reader.result);
+      setLogoImg(reader?.result?.toString() || "");
     };
-    reader.onerror = function (error) {};
+    reader.onerror = function (error) {
+      console.log("banner file choosing error : ", error);
+    };
   };
 
-  const saveCollection = (params) => {
+  const saveItem = (params) => {
     setWorking(true);
-    let newCollectionId = 0;
-    axios({
-      method: "post",
-      url: `${BACKEND_URL}/api/collection/`,
-      data: params,
-    })
-      .then(function (response) {
-        if (response.code == 0) {
-          newCollectionId = response.data._id;
-          let isCreatingNewItem = localStorage.getItem("isNewItemCreating");
-          if (isCreatingNewItem)
-            localStorage.setItem("newCollectionId", newCollectionId);
-          setWorking(false);
-          dispatch(changeConsideringCollectionId(newCollectionId));
-          toast.success(
-            <div>
-              You 've created a new collection. Click here to see the{" "}
-              <span
-                style={{ color: "#00f" }}
-                onClick={() => navigate("/collectionList")}
-              >
-                collection list
-              </span>
-              .
-            </div>
-          );
-        } else {
-          setWorking(false);
-          toast.success(<div>{response.message}</div>);
-        }
+    if (stockAmount > 1) {
+      axios({
+        method: "post",
+        url: `${BACKEND_URL}/api/item/multiple_create`,
       })
-      .catch(function (error) {
-        console.log("creating collection error : ", error);
-        toast.error("Uploading failed");
-        setWorking(false);
-      });
+        .then(async function (response) {
+          console.log("response = ", response);
+          if (response.status === 200) {
+            if (sale === true && currentChainId !== TEZOS_CHAIN_ID) {
+              var aucperiod = auction === false ? 0 : params.auctionPeriod;
+              var price = params.price;
+              try {
+                let ret = await batchMintOnSale(
+                  new Web3(globalProvider),
+                  currentUsr?.address || "",
+                  response.data,
+                  aucperiod * 24 * 3600,
+                  price,
+                  0,
+                  currentChainId || 1
+                );
+                if (ret.success === true) {
+                  setWorking(false);
+                  toast.success(
+                    <div>
+                      {`Successfully Minted ${stockAmount} items. You can see items at `}
+                      <span
+                        style={{ color: "#00f" }}
+                        onClick={() =>
+                          navigate(`/collectionItems/${params.collectionId}`)
+                        }
+                      >
+                        here
+                      </span>
+                      .
+                    </div>
+                  );
+                } else {
+                  setWorking(false);
+                  console.log(
+                    "Failed in multiple put on sale : " + ret.message
+                  );
+                  toast.error("Failed in multiple token deployment");
+                  return;
+                }
+              } catch (err) {
+                setWorking(false);
+                console.log("Failed in multiple minting : " + err);
+                toast.error("Failed in multiple minting");
+                return;
+              }
+            }
+            setWorking(false);
+            toast.success(
+              <div>
+                {`Successfully Created ${stockAmount} items. You can see items at `}
+                <span
+                  style={{ color: "#00f" }}
+                  onClick={() =>
+                    navigate(`/collectionItems/${params.collectionId}`)
+                  }
+                >
+                  here
+                </span>
+                .
+              </div>
+            );
+          } else {
+            setWorking(false);
+            console.log(
+              "Failed in multiple uploading : " + response.data.message
+            );
+            toast.error("Failed in multiple uploading");
+            return;
+          }
+        })
+        .catch(function (error) {
+          setWorking(false);
+          console.log("Failed in multiple uploading : " + error);
+          toast.error("Failed in multiple uploading");
+        });
+    } else {
+      axios({
+        method: "post",
+        url: `${BACKEND_URL}/api/item/create`,
+        data: params,
+      })
+        .then(async function (response) {
+          if (response.status === 200) {
+            if (sale === true && currentChainId !== TEZOS_CHAIN_ID) {
+              var aucperiod =
+                auction === false ? 0 : response.data.auctionPeriod;
+              var price = response.data.price;
+              try {
+                let ret = await singleMintOnSale(
+                  new Web3(globalProvider),
+                  currentUsr?.address || "",
+                  response.data._id,
+                  aucperiod * 24 * 3600,
+                  price,
+                  0,
+                  currentChainId || 1
+                );
+                if (ret.success === true) {
+                  setWorking(false);
+                  toast.success(
+                    <div>
+                      Successfully minted an item. You can see items at{" "}
+                      <span
+                        style={{ color: "#00f" }}
+                        onClick={() =>
+                          navigate(`/collectionItems/${params.collectionId}`)
+                        }
+                      >
+                        here
+                      </span>
+                    </div>
+                  );
+                } else {
+                  setWorking(false);
+                  console.log("Failed in put on sale : " + ret.message);
+                  toast.error("Failed in token deployment");
+                  return;
+                }
+              } catch (err) {
+                setWorking(false);
+                console.log("Failed in single item uploading : " + err);
+                toast.error("Failed in single item uploading");
+                return;
+              }
+            }
+            setWorking(false);
+            toast.success(
+              <div>
+                Successfully created an item. You can see items at{" "}
+                <span
+                  style={{ color: "#00f" }}
+                  onClick={() => navigate(`/collectionItems/${response._id}`)}
+                >
+                  here
+                </span>
+              </div>
+            );
+          } else {
+            setWorking(false);
+            console.log(
+              "Failed in single item uploading : " + response.data.message
+            );
+            toast.error("Failed in single item uploading");
+          }
+        })
+        .catch(function (error) {
+          setWorking(false);
+          console.log("Failed in single item uploading : " + error);
+          toast.error("Failed in single item uploading");
+        });
+    }
   };
 
-  const createCollection = async () => {
-    if (currentUsr === null || currentUsr === undefined) {
-      toast.warn("Please sign in and try again.");
+  const createNFTItem = async () => {
+    setPrice(price);
+
+    if (isEmpty(currentUsr) || isEmpty(detailedUserInfo)) {
+      toast.warn("You have to sign in before doing a trading.");
       return;
     }
-    if (selectedAvatarFile === null || selectedBannerFile === null) {
-      toast.warn("You have to select banner and avatar.");
-      return;
-    }
-    if (walletStatus === false) {
-      toast.warn("Please connect your wallet and try again.");
+    // if (selectedMusicFile == null) {
+    //   console.log("Invalid music file.");
+    //   toast.warn("Music file is not selected.");
+    //   return;
+    // }
+    if (selectedFile == null) {
+      console.log("Invalid file.");
+      toast.warn("Image is not selected.");
       return;
     }
     if (textName === "") {
-      toast.warn("Collection name can not be empty.");
+      toast.error("Item name cannot be empty.");
       return;
     }
-    try {
+    if (isEmpty(selected) || selected.name === "") {
+      toast.warn("Please select a collection and try again.");
+      return;
+    }
+    if (stockAmount < 1) {
+      toast.warn("Please input a valid stock amount.");
+      return;
+    }
+
+    if (currentChainId === 0) {
+      toast.warn("Please connect your wallet and try again.");
+      return;
+    }
+    if (sale === true) {
+      if (walletStatus === false) {
+        toast.warn("Please connect your wallet and try again.");
+        return;
+      }
+    }
+    setWorking(true);
+
+    const fileHash = await pinFileToIPFS(selectedFile);
+    const meta = {
+      name: textName,
+      description: textDescription,
+      image: "ipfs://" + fileHash,
+    };
+    const metauri = await pinJSONToIPFS(meta);
+
+    let paths = [],
+      idx = 0;
+    for (idx = 0; idx < stockAmount; idx++) paths.push(fileHash);
+    const params = {
+      itemName: textName,
+      itemMusicURL: fileHash,
+      itemLogoURL: fileHash,
+      itemDescription: textDescription,
+      collectionId: selected?._id || "",
+      creator: currentUsr?._id || "",
+      owner: currentUsr?._id || "",
+      isSale: 0,
+      price: !sale ? 0 : price,
+      auctionPeriod: !sale ? 0 : period,
+      stockAmount: stockAmount > 1 ? Math.floor(stockAmount) : 1,
+      mutiPaths: paths,
+      tokenId: Number(selected?.items?.length || 0) + Number(1),
+      metadataURI: metauri,
+      timeLength: timeLength,
+      stockGroupId: new Date().getTime(),
+      chainId: currentChainId || 1,
+      fileType: FILE_TYPE.IMAGE,
+    };
+    if (currentChainId === TEZOS_CHAIN_ID) {
       setWorking(true);
-
-      const collectionLogoURL = await pinFileToIPFS(selectedAvatarFile);
-      const collectionBannerURL = await pinFileToIPFS(selectedBannerFile);
-      console.log("collectionLogoURL >>> ", collectionLogoURL);
-      console.log("collectionBannerURL >>> ", collectionBannerURL);
-
-      let params = {
-        collectionLogoURL: collectionLogoURL,
-        collectionBannerURL: collectionBannerURL,
-        collectionName: textName,
-        collectionDescription: textDescription,
-        collectionCategory: categories.value,
-        price: floorPrice,
-        owner: currentUsr._id,
-        metaData: metaArry,
-        chainId: currentChainId,
-        constractAddr: "",
-      };
-      const metauri = await pinJSONToIPFS(params);
-      let address = await dispatch(
-        createTezosCollection({ Tezos: tezosInstance, metadata: metauri })
-      );
-      params.constractAddr = address;
-      saveCollection(params);
-      setWorking(false);
-    } catch (error) {
-      console.log(error);
-      toast.error("Network error!");
-    }
-  };
-
-  const setAddMetaField = () => {
-    if (metaFieldInput !== "") {
-      let mfs = metaFields;
-      mfs.push(metaFieldInput);
-      setMetaFields(mfs);
-      setMetaFieldInput("");
-    }
-  };
-
-  const onRemoveMetaFieldInput = (index) => {
-    let socs1 = [];
-    socs1 = metaFields;
-    socs1.splice(index, 1);
-    setMetaFields(socs1);
-
-    let socs2 = [];
-    socs2 = metaFieldDatas;
-    socs2.splice(index, 1);
-    setMetaFieldDatas(socs2);
-
-    let i;
-    let metaFdArry = [];
-    for (i = 0; i < socs1.length; i++) {
-      if (socs2[i] && socs2[i].length > 0) {
-        metaFdArry.push({ key: socs1[i], value: socs2[i] });
+      //read token id
+      const API_URL = `https://api.ghostnet.tzkt.io/v1/contracts/${selected?.contract}`;
+      try {
+        const tokenCount = (await axios.get(API_URL))?.data?.tokensCount;
+        console.log(tokenCount);
+        params.tokenId = tokenCount;
+        await dispatch(
+          mintTezosNFT({
+            Tezos: tezosInstance,
+            amount: 1,
+            metadata: metauri,
+            tokencontract: selected?.contract,
+            saveItem,
+            params,
+          })
+        );
+        setWorking(false);
+      } catch (err) {
+        console.log(err);
+        setWorking(false);
       }
-    }
-    setMetaArray(metaFdArry);
-  };
-
-  const onChangeMetaFieldValue = (data, metaIndex) => {
-    if (data !== "" && data !== undefined) {
-      let mfds = metaFieldDatas;
-      mfds[metaIndex] = data;
-      setMetaFieldDatas(mfds);
-
-      let socs1 = [];
-      socs1 = metaFields;
-      let socs2 = [];
-      socs2 = metaFieldDatas;
-
-      let i;
-      let metaFdArry = [];
-      for (i = 0; i < socs1.length; i++) {
-        if (socs2[i] && socs2[i].length > 0) {
-          metaFdArry.push({ key: socs1[i], value: socs2[i] });
-        }
-      }
-      setMetaArray(metaFdArry);
+    } else {
+      saveItem(params);
     }
   };
 
-  const onClickRemoveField = (index) => {
-    setRemoveField(false);
-    onRemoveMetaFieldInput(index);
+  const handleCheckboxChange = (e) => {
+    const selectedCategoryId = e.target.value;
+    const selectedCategory = colls?.find(
+      (cat) => cat._id === selectedCategoryId
+    );
+
+    setSelected(selectedCategory);
   };
 
-  const doRemovingModal = (index, field) => {
-    setConsideringFieldIndex(index);
-    setConsideringField(field);
-    setRemoveField(true);
-  };
-
-  const handleClick = (value, index) => {
-    setCategories(value, index);
-    setVisible(false);
-  };
-
-  console.log(categoriesOptions);
-
+  console.log(selected);
   return (
     <div className="create-item">
       <Header />
@@ -255,9 +473,7 @@ const CreateItem = () => {
         <div className="themesflat-container">
           <div className="row">
             <div className="col-md-12">
-              <h2 className="tf-title-heading style-1 ct">
-                Create a collection
-              </h2>
+              <h2 className="tf-title-heading style-1 ct">Create New Item</h2>
             </div>
             <div className="col-xl-3 col-lg-6 col-md-6 col-12">
               <h4 className="title-create-item">Preview item</h4>
@@ -278,9 +494,7 @@ const CreateItem = () => {
                 <form action="#">
                   <h4 className="title-create-item">Upload file</h4>
                   <label className="uploadFile">
-                    <span className="filename">
-                      PNG, JPG, GIF, WEBP or MP4. Max 200mb.
-                    </span>
+                    <span className="filename">PNG, JPG</span>
                     <input
                       type="file"
                       className="inputfile form-control"
@@ -289,100 +503,139 @@ const CreateItem = () => {
                     />
                   </label>
                 </form>
-                <div
-                  style={{
-                    marginTop: "1rem",
-                    marginBottom: "1rem",
-                  }}
-                >
-                  <h4 className="title-create-item">Banner image</h4>
-                  <p>
-                    This image will be appear at the top of your collection
-                    page. Avoid including too much text in this banner image, as
-                    the dimensions change on different devices. 1400x400
-                    recommend.
-                  </p>
-                </div>
-                <div>
-                  {bannerImg !== "" ? (
-                    <img
-                      id="BannerImg"
-                      src={bannerImg}
-                      alt="Banner"
-                      style={{
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    <label className="uploadFile">
-                      <span className="filename">PNG, JPG</span>
-                      <input
-                        className="inputfile form-control"
-                        type="file"
-                        name="file"
-                        onChange={changeBanner}
-                      />
-                    </label>
-                  )}
-                </div>
-                <div className="flat-tabs tab-create-item">
-                  <h4 className="title-create-item">Collection details</h4>
-                  <h4 className="title-create-item">Price</h4>
-                  <input
-                    defaultValue="0.0001 "
-                    value={floorPrice}
-                    type="number"
-                    min="0"
-                    step="0.001"
-                    placeholder="Enter price for one item (ETH)"
-                    onChange={(event) => {
-                      setFloorPrice(event.target.value);
-                    }}
-                  />
 
-                  <h4 className="title-create-item">Title</h4>
+                <div className="flat-tabs tab-create-item">
+                  <h4 className="title-create-item">Item Name</h4>
                   <input
                     type="text"
                     value={textName}
                     placeholder="Item Name"
-                    onChange={(event) => {
-                      setTextName(event.target.value);
-                    }}
+                    onChange={(e) => setTextName(e.target.value)}
                   />
 
                   <h4 className="title-create-item">Description</h4>
                   <textarea
                     value={textDescription}
-                    placeholder="e.g. “This is very limited item”"
+                    placeholder="...."
                     onChange={(event) => {
                       setTextDescription(event.target.value);
                     }}
                   ></textarea>
-                  <h4 className="title-create-item">Category</h4>
+                  <p className="mt-1">
+                    The description will be included on the item's detail page
+                    underneath its image.{" "}
+                    <span style={{ color: "#5142fc" }}>Markdown</span> syntax is
+                    supported.
+                  </p>
 
-                  <div className="row-form style-3">
-                    <div className="inner-row-form style-2">
-                      <div className="seclect-box" style={{ padding: "0" }}>
-                        <div id="item-create" className="dropdown">
-                          <Link to="#" className="btn-selector nolink">
-                            {categories.text}
-                          </Link>
-                          <ul>
-                            {categoriesOptions?.map((cat, index) => (
-                              <li
-                                key={index}
-                                onClick={() => handleClick(cat, index)}
-                              >
-                                <span>{cat.text}</span>
-                              </li>
-                            ))}
-                          </ul>
+                  <h4 className="title-create-item  mb-0">
+                    {" "}
+                    Choose collection
+                  </h4>
+                  <p>
+                    Choose an exiting collection or create a new one. If you
+                    don't have any collectio please click here to go to{" "}
+                    <span
+                      onClick={() => navigate("/createCollection")}
+                      style={{ cursor: "pointer", color: "#5142fc" }}
+                    >
+                      create a collection
+                    </span>
+                    .
+                  </p>
+
+                  <div className="form-inner mt-4">
+                    <div className="flex align-items-center flex-wrap flex-gap-2">
+                      {colls?.map((cat, index) => (
+                        <div className="row-form cat-wrap style-2" key={index}>
+                          <div className="cat-img mb-4">
+                            <img
+                              src={`${ipfsUrl}${cat?.bannerURL || ""}`}
+                              alt="Banner"
+                              width={"100%"}
+                              height={"100%"}
+                            />
+                          </div>
+
+                          <label className="d-flex align-items-center p-0">
+                            <input
+                              type="radio"
+                              name="category"
+                              value={cat._id}
+                              onChange={(e) => handleCheckboxChange(e)}
+                            />
+                            <p>{cat?.name}</p>
+
+                            {/* <span className="btn-radiobox"></span> */}
+                          </label>
                         </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {currentChainId !== TEZOS_CHAIN_ID && (
+                    <div className="flex align-items-center justify-content-between">
+                      <div>
+                        <h4 className="title-create-item mb-0"> Put on sale</h4>
+                        <p>
+                          Please enter the price and stock amount that shows how
+                          many copies of this item you want to sell
+                        </p>
+                      </div>
+                      <div className="form-inner">
+                        <label style={{ position: "relative" }}>
+                          <input type="checkbox" onChange={setSale} />
+                          <span className="btn-checkbox"></span>
+                        </label>
                       </div>
                     </div>
-                    <button onClick={() => createCollection()}>
-                      Create Collection
-                    </button>
+                  )}
+
+                  {currentChainId !== TEZOS_CHAIN_ID && (
+                    <div className="flex align-items-center justify-content-between">
+                      <div>
+                        <h4 className="title-create-item mb-0">
+                          Put it on auction
+                        </h4>
+                        <p>Please input expiration date amd time of auction</p>
+                      </div>
+                      <div className="form-inner">
+                        <label style={{ position: "relative" }}>
+                          <input type="checkbox" onChange={setAuction} />
+                          <span className="btn-checkbox"></span>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  {sale === true &&
+                    auction === true &&
+                    currentChainId !== TEZOS_CHAIN_ID && (
+                      <div className="form-inner">
+                        <h4 className="title-create-item mb-0">
+                          Enter your auction end time
+                        </h4>
+
+                        <select
+                          className="w-full border rounded-xl"
+                          value={period}
+                          onChange={(event) => {
+                            setPeriod(event.target.value);
+                          }}
+                          placeholder="select auction time"
+                        >
+                          <option value={0.000694}>1 min</option>
+                          <option value={0.00347}>5 min</option>
+                          <option value={0.00694}>10 min</option>
+                          <option value={7}>7 days</option>
+                          <option value={10}>10 days</option>
+                          <option value={30}>1 month</option>
+                        </select>
+                      </div>
+                    )}
+
+                  <div className="row-form style-3 mt-5">
+                    <button onClick={() => createNFTItem()}>Create Item</button>
                   </div>
                 </div>
               </div>

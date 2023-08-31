@@ -13,6 +13,7 @@ import {
 import { useSelector } from "react-redux";
 import { selectCurrentUser } from "../../redux/reducers/auth.reducers";
 import avt from "../../assets/images/avatar/avt.png";
+import Spinner from "../Spinner/Spinner";
 
 const socket = io(`${BACKEND_URL}`);
 
@@ -33,9 +34,11 @@ const TopSeller = () => {
   const [date, setDate] = useState(sortOrder[0]);
   const [direction, setDirection] = useState(directionOptions[1]);
   const [items, setItems] = useState([]);
+  const [loader, setLoader] = useState(false);
 
   const getPopularUserList = (time, limit) => {
     // time : timeframe, 0: all, 1: today, 2: this month, 3: 3 months, 4: year
+    setLoader(true);
 
     axios
       .post(
@@ -53,6 +56,7 @@ const TopSeller = () => {
       .catch((error) => {
         // console.log("error:", error);
       });
+    setLoader(false);
   };
 
   useEffect(() => {
@@ -85,17 +89,18 @@ const TopSeller = () => {
     }
   };
 
-  console.log(items);
   return (
     <section className="tf-section top-seller bg-home-3">
       <div className="themesflat-container">
         <div className="row">
           <div className="col-md-12">
             <div className="">
-              <h2 className="tf-title style2">Top Buyer</h2>
-              <div className="heading-line s1"></div>
+              <h2 className="tf-title style2 mb-4">Top Buyer</h2>
+              {/* <div className="heading-line s1"></div> */}
             </div>
+            <Spinner isLoading={loader} />
           </div>
+
           {items &&
             items.length > 0 &&
             items.map((item, index) => (

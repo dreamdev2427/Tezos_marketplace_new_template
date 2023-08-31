@@ -12,10 +12,7 @@ import shape3 from "../../assets/images/backgroup-secsion/bg-gradient3.png";
 import imgbg from "../../assets/images/backgroup-secsion/img_bg_page_title.jpg";
 import isEmpty from "../../utilities/isEmpty";
 import { useAppSelector } from "../../redux/hooks.ts";
-import {
- 
-  selectCurrentUser,
-} from "../../redux/reducers/auth.reducers.ts";
+import { selectCurrentUser } from "../../redux/reducers/auth.reducers.ts";
 
 const Slider = (props) => {
   const currentUsr = useAppSelector(selectCurrentUser);
@@ -73,21 +70,18 @@ const SliderItem = (props) => (
                   <h1 className="heading">{props.item.title_3}</h1>
                   <p className="sub-heading">{props.item.description}</p>
                   <div className="flat-bt-slider flex style2">
-                    {/* <Link
-                      to="/explore-01"
+                    <Link
+                      to="/explore"
                       className="sc-button header-slider style style-1 rocket fl-button pri-1"
                     >
                       <span>Explore</span>
-                    </Link> */}
-                    {!isEmpty(props.currentUsr) ||
-                      (!isEmpty(props.currentUsr?.email) && (
-                        <Link
-                          to="/create-item"
-                          className="sc-button header-slider style style-1 note fl-button pri-1"
-                        >
-                          <span>Create</span>
-                        </Link>
-                      ))}
+                    </Link>
+                    <Link
+                      to="/create-item"
+                      className="sc-button header-slider style style-1 note fl-button pri-1"
+                    >
+                      <span>Create</span>
+                    </Link>
                   </div>
                 </div>
                 <div className="image">

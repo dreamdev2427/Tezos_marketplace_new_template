@@ -2377,7 +2377,7 @@ section.tf-section.live-auctions.home3 {
 
 /* Top Seller */
 .tf-section.top-seller {
-  padding: 0;
+  padding: 50px 0;
 }
 .tf-section.popular-collection {
   padding: 38px 0 0px;
@@ -3410,7 +3410,8 @@ section.today-picks {
   font-size: 14px;
 }
 
-.form-inner form label {
+.form-inner form label,
+.form-inner label {
   line-height: 26px;
   font-size: 14px;
   position: relative;
@@ -3430,6 +3431,21 @@ section.today-picks {
   margin-bottom: 0px;
 }
 
+.form-inner .cat-wrap label input {
+  position: inherit;
+  opacity: 1;
+  width: auto;
+  height: auto;
+  margin-right: 20px;
+}
+
+
+.form-inner .cat-wrap label input[type=radio] {
+  border: 0px;
+  width: 20%;
+  height: 1.5em;
+}
+
 .form-inner .btn-checkbox {
   position: absolute;
   top: 0;
@@ -3444,7 +3460,8 @@ section.today-picks {
   border: 1px solid #8a8aa0;
 }
 
-.form-inner form label input:checked ~ .btn-checkbox {
+.form-inner form label input:checked ~ .btn-checkbox,
+.form-inner label input:checked ~ .btn-checkbox {
   background-color: var(--primary-color3);
   border: 2px solid var(--primary-color3);
 }
@@ -3455,7 +3472,8 @@ section.today-picks {
   display: none;
 }
 
-.form-inner form label input:checked ~ .btn-checkbox:after {
+.form-inner form label input:checked ~ .btn-checkbox:after,
+.form-inner label input:checked ~ .btn-checkbox:after {
   display: block;
 }
 
@@ -3645,6 +3663,9 @@ section.today-picks {
   -moz-border-radius: 21px;
   border-radius: 21px;
   position: absolute;
+  object-fit: fill;
+  width: 100%;
+  max-height: 200px;
 }
 
 .tab-authors .author-profile .infor-profile {
@@ -4516,6 +4537,7 @@ section.today-picks {
 
 .title-create-item {
   line-height: 26px;
+  margin-top: 20px;
   margin-bottom: 20px;
 }
 

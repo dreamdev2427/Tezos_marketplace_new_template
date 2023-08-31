@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -15,14 +15,18 @@ import {
   selectHotCollections,
 } from "../../redux/reducers/collection.reducers";
 import avt from "../../assets/images/avatar/avt.png";
+import Spinner from "../Spinner/Spinner";
 
 var socket = io(`${BACKEND_URL}`);
 
 const PopularCollection = () => {
   const dispatch = useDispatch();
   const globalHotCollections = useAppSelector(selectHotCollections);
+  const [loader, setLoader] = useState(false);
 
   const getHotCollections = (time, limit) => {
+    setLoader(true);
+
     axios
       .post(
         `${BACKEND_URL}/api/collection/get_hot_collections`,
@@ -39,6 +43,7 @@ const PopularCollection = () => {
       .catch((error) => {
         // console.log("error:", error);
       });
+    setLoader(false);
   };
   useEffect(() => {
     getHotCollections(0, 5);
@@ -49,18 +54,20 @@ const PopularCollection = () => {
       getHotCollections(0, 5);
     });
   }, []);
-  console.log(globalHotCollections);
+
   return (
     <section className="tf-section popular-collection bg-home-3">
       <div className="themesflat-container">
         <div className="row">
           <div className="col-md-12">
             <div className="">
-              <h2 className="tf-title style2">Popular Collection</h2>
-              <div className="heading-line"></div>
+              <h2 className="tf-title style2 mb-4">Popular Collection</h2>
+              {/* <div className="heading-line"></div> */}
             </div>
           </div>
           <div className="col-md-12">
+            <Spinner isLoading={loader} />
+
             <div className="collection">
               <Swiper
                 modules={[Navigation, Scrollbar, A11y]}
@@ -91,9 +98,6 @@ const PopularCollection = () => {
       </div>
     </section>
   );
-};
-PopularCollection.propTypes = {
-  data: PropTypes.array.isRequired,
 };
 
 const PopularCollectionItem = (props) => (
@@ -142,9 +146,7 @@ const PopularCollectionItem = (props) => (
                   <div className="infor">
                     <span>Created by</span>
                     <span className="name">
-                      <Link
-                        to={`/collectionItems/${props.item.creator_info._id}`}
-                      >
+                      <Link to={`/collectionItems/${props.item._id}`}>
                         {props.item.creator_info?.nickname}
                       </Link>
                     </span>

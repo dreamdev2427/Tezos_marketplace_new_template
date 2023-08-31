@@ -11,6 +11,7 @@ import CollectionList from "./CollectionLists";
 import CollectionItems from "./CollectionItems";
 import WalletConnect from "./WalletConnect";
 import CreateItem from "./CreateItem";
+import CreateCollection from "./CreateCollection";
 import EditProfile from "./EditProfile";
 import Ranking from "./Ranking";
 import Login from "./Login";
@@ -26,6 +27,7 @@ const routes = [
   { path: "/live-auctions", component: <LiveAuctions /> },
   { path: "/item-details/:itemId", component: <ItemDetails /> },
   { path: "/collectionList", component: <CollectionList /> },
+  { path: "/createCollection", component: <CreateCollection /> },
   { path: "/collectionItems/:collectionId", component: <CollectionItems /> },
   { path: "/blog", component: <Blog /> },
   { path: "/blog-details", component: <BlogDetails /> },

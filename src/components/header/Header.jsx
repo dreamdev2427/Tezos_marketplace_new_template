@@ -137,6 +137,7 @@ const Header = () => {
   };
 
   const [activeIndex, setActiveIndex] = useState(null);
+
   const handleOnClick = (index) => {
     setActiveIndex(index);
   };
@@ -220,6 +221,8 @@ const Header = () => {
     }
   };
 
+  // console.log(currentUsr);
+
   return (
     <header id="header_main" className="header_1 js-header" ref={headerRef}>
       <div className="themesflat-container">
@@ -231,7 +234,6 @@ const Header = () => {
                   <div id="site-logo-inner">
                     <Link to="/" rel="home" className="main-logo">
                       <img
-                        className="logo-dark"
                         id="logo_header"
                         src={logodark}
                         srcSet={`${logodark2x}`}
@@ -248,7 +250,47 @@ const Header = () => {
                   <span></span>
                 </div>
                 <nav id="main-nav" className="main-nav" ref={menuLeft}>
+                  <div id="site-logo" className="clearfix d-lg-none">
+                    <div className="resp-logo tex-center">
+                      <Link to="/" rel="home" className="main-logo">
+                        <img
+                          id="logo_header"
+                          src={logodark}
+                          srcSet={`${logodark2x}`}
+                          alt="nft-gaming"
+                        />
+                      </Link>
+                    </div>
+                  </div>
                   <ul id="menu-primary-menu" className="menu">
+                    {isEmpty(currentUsr) || isEmpty(currentUsr?.email) ? (
+                      <>
+                        <Link
+                          to="/login"
+                          className="sc-button style-1 fl-button pri-1 mb-4 mb-lg-0 mr-lg-3"
+                        >
+                          <span>Login</span>
+                        </Link>
+                        <Link
+                          to="/sign-up"
+                          className="sc-button style-1 fl-button pri-1"
+                        >
+                          <span>Sign Up</span>
+                        </Link>
+                      </>
+                    ) : (
+                      <div className="d-lg-none">
+                        {(isEmpty(currentUsr?.address) === false ||
+                          isEmpty(currentUsr?.tezosaddress) === false) && (
+                          <Link
+                            to="/create-item"
+                            className="sc-button style-1 fl-button pri-1 mb-4"
+                          >
+                            <span>Create</span>
+                          </Link>
+                        )}
+                      </div>
+                    )}
                     {menus.map((data, index) => (
                       <li
                         key={index}
@@ -279,7 +321,7 @@ const Header = () => {
                   </ul>
                 </nav>
                 <div className={`flat-search-btn connect-wal flex`}>
-                  <div className="header-search flat-show-search" id="s1">
+                  {/* <div className="header-search flat-show-search" id="s1">
                     <Link
                       to="#"
                       className="show-search header-search-trigger"
@@ -312,33 +354,20 @@ const Header = () => {
                         </button>
                       </form>
                     </div>
-                  </div>
+                  </div> */}
                   <div
                     className="sc-btn-top mg-r-12 admin_active"
                     id="site-header"
                   >
                     {isEmpty(currentUsr) || isEmpty(currentUsr?.email) ? (
-                      <>
-                        <Link
-                          to="/login"
-                          className="sc-button style-1 fl-button pri-1 mr-3"
-                        >
-                          <span>Login</span>
-                        </Link>
-                        <Link
-                          to="/sign-up"
-                          className="sc-button style-1 fl-button pri-1"
-                        >
-                          <span>Sign Up</span>
-                        </Link>
-                      </>
+                      <></>
                     ) : (
                       <>
                         {(isEmpty(currentUsr?.address) === false ||
                           isEmpty(currentUsr?.tezosaddress) === false) && (
                           <Link
                             to="/create-item"
-                            className="sc-button style-1 fl-button pri-1 mr-3"
+                            className="sc-button style-1 fl-button pri-1 mr-3 d-none d-xl-block"
                           >
                             <span>Create</span>
                           </Link>
@@ -346,14 +375,16 @@ const Header = () => {
                         <Link
                           to="#"
                           onClick={handleOpenWalletDropdown}
-                          className="sc-button style-1 fl-button pri-1"
+                          class="sc-button header-slider style style-1 wallet fl-button pri-1"
                         >
-                          {currentChainId === 0
-                            ? "Connect wallet"
-                            : currentChainId === platformChainIds[0] ||
-                              currentChainId === platformChainIds[1]
-                            ? chains[currentChainId]?.name
-                            : "Unusable network"}
+                          <span>
+                            {currentChainId === 0
+                              ? "Connect wallet"
+                              : currentChainId === platformChainIds[0] ||
+                                currentChainId === platformChainIds[1]
+                              ? chains[currentChainId]?.name
+                              : "Unusable network"}
+                          </span>
                         </Link>
                         <div
                           className={`avatar_popup_wallet  mt-20 ${
@@ -364,12 +395,15 @@ const Header = () => {
                             <Link
                               onClick={() => switchNetwork(platformChainIds[0])}
                             >
-                              {chains[platformChainIds[0]].name}
+                              <i class="fas fa-wallet"></i>
+                              <span>{chains[platformChainIds[0]].name}</span>
                             </Link>
-                            <Link onClick={() => handleConnect2Tezos()}
-                            className="mt-10"
+                            <Link
+                              onClick={() => handleConnect2Tezos()}
+                              className="mt-10"
                             >
-                              {chains[platformChainIds[1]].name}
+                              <i class="fas fa-wallet"></i>
+                              <span>{chains[platformChainIds[1]].name}</span>
                             </Link>
                           </div>
                         </div>
@@ -433,19 +467,21 @@ const Header = () => {
                           </div>
                           <div className="d-flex align-items-center copy-text justify-content-between mt-10">
                             <span>
-                              {!isEmpty(currentUsr) &&
+                              {/* {!isEmpty(currentUsr) &&
                               !isEmpty(currentUsr?.address)
                                 ? compressWalletAddr(currentUsr?.address || "")
-                                : ""}{" "}
+                                : ""}{" "} */}
+                              {connected === false && "No wallet"}
+                              {connected === true && compressedAccount}
                             </span>
                             <Link to="/" className="ml-2">
                               <i className="fal fa-copy"></i>
                             </Link>
                           </div>
-                          <div className="hr"></div>
-                          <div className="links mt-20">
+                          <hr className="hr" />
+                          <div className="links">
                             <Link to={`/author/${currentUsr?._id}`}>
-                              <i className="fab fa-user"></i>{" "}
+                              <i class="far fa-user"></i>
                               <span> My profile</span>
                             </Link>
                             <Link className="mt-10" to={`/collectionList`}>
@@ -456,7 +492,9 @@ const Header = () => {
                               <i className="fas fa-pencil-alt"></i>{" "}
                               <span> Edit Profile</span>
                             </Link>
-                            <Link className="mt-10" to="/" id="logout">
+                            <hr className="hr" style={{width: "100%"}} />
+
+                            <Link to="/" id="logout">
                               <i className="fal fa-sign-out"></i>{" "}
                               <span onClick={handleLogout}> Logout</span>
                             </Link>

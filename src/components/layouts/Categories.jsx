@@ -12,7 +12,7 @@ import {
   changeCategorySummary,
   selectCategorySummary,
 } from "../../redux/reducers/nft.reducers";
-
+import Spinner from "../Spinner/Spinner";
 import "swiper/scss";
 import "swiper/scss/navigation";
 import "swiper/scss/pagination";
@@ -24,8 +24,11 @@ const Categories = () => {
 
   const [modalShow, setModalShow] = useState(false);
   const [summary, setSummary] = useState([]);
+  const [loader, setLoader] = useState(false);
 
   const getSummaryOfCategories = async () => {
+    setLoader(true);
+
     await axios
       .post(`${BACKEND_URL}/api/item/getSummaryByCollectionNames`)
       .then((response) => {
@@ -35,6 +38,7 @@ const Categories = () => {
         dispatch(changeCategorySummary(response.data.data || []));
       })
       .catch((error) => {});
+    setLoader(false);
   };
 
   useEffect(() => {
@@ -49,12 +53,15 @@ const Categories = () => {
             <div className="col-md-12">
               <div className="heading-live-auctions">
                 <h2 className="tf-title pb-20">Browse by category</h2>
-                <Link to="/explore" className="exp style2">
+                {/* <Link to="/explore" className="exp style2">
                   EXPLORE MORE
-                </Link>
+                </Link> */}
               </div>
             </div>
+
             <div className="col-md-12">
+              <Spinner isLoading={loader} />
+
               <Swiper
                 modules={[Navigation, Pagination, Scrollbar, A11y]}
                 spaceBetween={30}
@@ -90,7 +97,9 @@ const Categories = () => {
                               </div>
                               <div className="card-title">
                                 <h5>
-                                  <Link to={`/ItemsCategory/${item.category.text}`}>
+                                  <Link
+                                    to={`/ItemsCategory/${item.category.text}`}
+                                  >
                                     {item.category.text}
                                   </Link>
                                 </h5>
