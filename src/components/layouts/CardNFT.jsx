@@ -56,14 +56,27 @@ const CardNFT = (props) => {
           </div>
         </div>
         {props.item?.isSale > 0 ? (
-          <div className="price">
-            <span>Current Price</span>
-            <h5>
-              {" "}
-              {props.item.price}{" "}
-              {props.item.chainId === TEZOS_CHAIN_ID ? "TEZ" : "ETH"}
-            </h5>
-          </div>
+          props.item?.isSale === 1 ? (
+            <div className="price">
+              <span>Current Price</span>
+              <h5>
+                {" "}
+                {props.item.price}{" "}
+                {props.item.chainId === TEZOS_CHAIN_ID ? "TEZ" : "ETH"}
+              </h5>
+            </div>
+          ) : (
+            <div className="price">
+              <span>Current Bid</span>
+              <h5>
+                {" "}
+                {props.item.bids.length > 0
+                  ? props.item.bids[props.item.bids.length - 1].price
+                  : props.item.price}{" "}
+                {props.item.chainId === TEZOS_CHAIN_ID ? "TEZ" : "ETH"}
+              </h5>
+            </div>
+          )
         ) : (
           <div className="price">
             <span>Unlisted</span>

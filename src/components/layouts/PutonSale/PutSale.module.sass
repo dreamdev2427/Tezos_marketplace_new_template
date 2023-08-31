@@ -1,0 +1,122 @@
+@import ../../../styles/helpers
+
+.sale
+    padding: 20px
+.title
+    margin-bottom: 32px
+
+.line
+    display: flex
+    align-items: center
+    margin-bottom: 32px
+    strong
+        white-space: nowrap
+        font-weight: 500
+.bottom
+    display: flex
+    align-items: center
+    justify-content: space-evenly
+    padding-top: 20px
+
+.icon
+    position: relative
+    display: flex
+    justify-content: center
+    align-items: center
+    flex-shrink: 0
+    width: 48px
+    height: 48px
+    margin-right: 16px
+    background: $purple
+    border: 2px solid $purple
+    border-radius: 50%
+    transition: all .2s
+    svg
+        fill: $neutrals8
+        transition: fill .2s
+    .loader
+        position: absolute
+        top: -2px
+        left: -2px
+        right: -2px
+        bottom: -2px
+    
+.details
+    flex-grow: 1
+
+.info
+    +body-bold-2
+
+.text
+    color: $white
+
+.switch
+    flex-shrink: 0
+    margin-left: 16px
+
+.row
+    display: flex
+    padding-top: 12px
+    &:first-child
+        padding: 0 0 12px
+        font-weight: 500
+        +dark
+            border-color: $neutrals3
+
+.col
+    +body-2
+    &:first-child
+        color: $neutrals4
+    &:nth-child(2)
+        margin-left: auto
+        padding-left: 30px
+        font-weight: 500
+
+.btns
+    margin-top: 32px
+
+.button
+    width: 100%
+    &:not(:last-child)
+        margin-bottom: 8px
+
+.input
+    width: 100%
+    height: 48px
+
+    background: none
+    border-radius: 0
+    +poppins
+    +body-bold-2
+    color: $neutrals2
+    transform: border-color .2s
+    +dark
+        border-color: $neutrals3
+        color: $neutrals8
+    +placeholder
+        color: $neutrals4
+    &:focus
+        border-color: $neutrals4
+
+.select
+    width: 100%
+    height: 48px
+
+    background: none
+    border-radius: 3px
+    +poppins
+    +body-bold-2
+    color: $neutrals8
+    transform: border-color .2s
+    +dark
+        border-color: $neutrals3
+        color: $neutrals8
+    +placeholder
+        color: $neutrals4
+    &:focus
+        border-color: $neutrals4
+    padding-left: 10px
+
+.textForPutSale
+    color: $neutrals4
+

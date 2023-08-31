@@ -45,6 +45,7 @@ import {
   singleMintOnSale,
 } from "../InteractWithSmartContract/interact";
 import Form from "react-bootstrap/Form";
+import { Backdrop, CircularProgress } from "@mui/material";
 
 const CreateItem = () => {
   const [sale, setSale] = useState(false);
@@ -68,7 +69,7 @@ const CreateItem = () => {
 
   const [stockAmount, setStockAmount] = useState(1);
   const [price, setPrice] = useState(0);
-  const [working, setWorking] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -194,14 +195,13 @@ const CreateItem = () => {
   };
 
   const saveItem = (params) => {
-    setWorking(true);
+    setProcessing(true);
     if (stockAmount > 1) {
       axios({
         method: "post",
         url: `${BACKEND_URL}/api/item/multiple_create`,
       })
         .then(async function (response) {
-          console.log("response = ", response);
           if (response.status === 200) {
             if (sale === true && currentChainId !== TEZOS_CHAIN_ID) {
               var aucperiod = auction === false ? 0 : params.auctionPeriod;
@@ -217,7 +217,7 @@ const CreateItem = () => {
                   currentChainId || 1
                 );
                 if (ret.success === true) {
-                  setWorking(false);
+                  setProcessing(false);
                   toast.success(
                     <div>
                       {`Successfully Minted ${stockAmount} items. You can see items at `}
@@ -233,7 +233,7 @@ const CreateItem = () => {
                     </div>
                   );
                 } else {
-                  setWorking(false);
+                  setProcessing(false);
                   console.log(
                     "Failed in multiple put on sale : " + ret.message
                   );
@@ -241,13 +241,14 @@ const CreateItem = () => {
                   return;
                 }
               } catch (err) {
-                setWorking(false);
+                setProcessing(false);
                 console.log("Failed in multiple minting : " + err);
                 toast.error("Failed in multiple minting");
                 return;
               }
             }
-            setWorking(false);
+            setProcessing(false);
+            console.log(params);
             toast.success(
               <div>
                 {`Successfully Created ${stockAmount} items. You can see items at `}
@@ -263,7 +264,7 @@ const CreateItem = () => {
               </div>
             );
           } else {
-            setWorking(false);
+            setProcessing(false);
             console.log(
               "Failed in multiple uploading : " + response.data.message
             );
@@ -272,7 +273,7 @@ const CreateItem = () => {
           }
         })
         .catch(function (error) {
-          setWorking(false);
+          setProcessing(false);
           console.log("Failed in multiple uploading : " + error);
           toast.error("Failed in multiple uploading");
         });
@@ -299,7 +300,7 @@ const CreateItem = () => {
                   currentChainId || 1
                 );
                 if (ret.success === true) {
-                  setWorking(false);
+                  setProcessing(false);
                   toast.success(
                     <div>
                       Successfully minted an item. You can see items at{" "}
@@ -314,32 +315,32 @@ const CreateItem = () => {
                     </div>
                   );
                 } else {
-                  setWorking(false);
+                  setProcessing(false);
                   console.log("Failed in put on sale : " + ret.message);
                   toast.error("Failed in token deployment");
                   return;
                 }
               } catch (err) {
-                setWorking(false);
+                setProcessing(false);
                 console.log("Failed in single item uploading : " + err);
                 toast.error("Failed in single item uploading");
                 return;
               }
             }
-            setWorking(false);
+            setProcessing(false);
             toast.success(
               <div>
                 Successfully created an item. You can see items at{" "}
                 <span
                   style={{ color: "#00f" }}
-                  onClick={() => navigate(`/collectionItems/${response._id}`)}
+                  onClick={() => navigate(`/collectionItems/${params.collectionId}`)}
                 >
                   here
                 </span>
               </div>
             );
           } else {
-            setWorking(false);
+            setProcessing(false);
             console.log(
               "Failed in single item uploading : " + response.data.message
             );
@@ -347,7 +348,7 @@ const CreateItem = () => {
           }
         })
         .catch(function (error) {
-          setWorking(false);
+          setProcessing(false);
           console.log("Failed in single item uploading : " + error);
           toast.error("Failed in single item uploading");
         });
@@ -394,7 +395,7 @@ const CreateItem = () => {
         return;
       }
     }
-    setWorking(true);
+    setProcessing(true);
 
     const fileHash = await pinFileToIPFS(selectedFile);
     const meta = {
@@ -428,12 +429,11 @@ const CreateItem = () => {
       fileType: FILE_TYPE.IMAGE,
     };
     if (currentChainId === TEZOS_CHAIN_ID) {
-      setWorking(true);
+      setProcessing(true);
       //read token id
       const API_URL = `https://api.ghostnet.tzkt.io/v1/contracts/${selected?.contract}`;
       try {
         const tokenCount = (await axios.get(API_URL))?.data?.tokensCount;
-        console.log(tokenCount);
         params.tokenId = tokenCount;
         await dispatch(
           mintTezosNFT({
@@ -445,10 +445,10 @@ const CreateItem = () => {
             params,
           })
         );
-        setWorking(false);
+        setProcessing(false);
       } catch (err) {
         console.log(err);
-        setWorking(false);
+        setProcessing(false);
       }
     } else {
       saveItem(params);
@@ -464,7 +464,6 @@ const CreateItem = () => {
     setSelected(selectedCategory);
   };
 
-  console.log(selected);
   return (
     <div className="create-item">
       <Header />
@@ -473,7 +472,7 @@ const CreateItem = () => {
         <div className="themesflat-container">
           <div className="row">
             <div className="col-md-12">
-              <h2 className="tf-title-heading style-1 ct">Create New Item</h2>
+              <h2 className="tf-title-heading style-1 ct mt-2">Create New Item</h2>
             </div>
             <div className="col-xl-3 col-lg-6 col-md-6 col-12">
               <h4 className="title-create-item">Preview item</h4>
@@ -644,6 +643,14 @@ const CreateItem = () => {
         </div>
       </div>
       <Footer />
+      {
+        <Backdrop
+          sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+          open={processing}
+        >
+          <CircularProgress color="inherit" />
+        </Backdrop>
+      }
     </div>
   );
 };

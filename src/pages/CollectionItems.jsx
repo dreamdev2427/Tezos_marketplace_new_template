@@ -17,6 +17,7 @@ import { BACKEND_URL, ipfsUrl, chains, TEZOS_CHAIN_ID } from "../config";
 import isEmpty from "../utilities/isEmpty";
 
 import avt from "../assets/images/avatar/avt.png";
+import CardNFT from "../components/layouts/CardNFT";
 
 const CollectionItems = () => {
   const { collectionId } = useParams();
@@ -140,7 +141,7 @@ const CollectionItems = () => {
                 {currentUsr && currentUsr?._id === collection?.owner?._id && (
                   <div className="btn-profile">
                     <Link
-                      to={"/createCollection"}
+                      to={"/create-item"}
                       className="sc-button style-1 follow"
                     >
                       Create
@@ -155,69 +156,9 @@ const CollectionItems = () => {
                   {items.slice(0, visible).map((data, index) => (
                     <div
                       key={index}
-                      className="col-xl-3 col-lg-4 col-md-6 col-12"
+                      className="fl-item col-xl-3 col-lg-4 col-md-6 col-sm-6"
                     >
-                      <div className="sc-card-product explode ">
-                        <div className="card-media">
-                          <Link to={`/item-details/${data._id}`}>
-                            <img
-                              src={`${ipfsUrl}${data?.logoURL}`}
-                              alt="NFT"
-                              style={{ height: "250px", objectFit: "cover" }}
-                            />
-                          </Link>
-                        </div>
-                        <div className="card-title mg-bt-16">
-                          <h5>
-                            <Link to={`/item-details/${data._id}`}>
-                              "{data?.description}"
-                            </Link>
-                          </h5>
-                        </div>
-                        <div className="meta-info">
-                          <div className="author">
-                            <div className="avatar">
-                              <img
-                                src={`${ipfsUrl}${
-                                  data?.logoURL ? data?.logoURL : avt
-                                }`}
-                                alt="Avatar"
-                                style={{ height: "100%", width:"100%", objectFit: "cover" }}
-                              />
-                            </div>
-                            <div className="info">
-                              <span>Creator</span>
-                              <h6>
-                                <Link to="/author">{data.name}</Link>
-                              </h6>
-                            </div>
-                          </div>
-                          <div className="stock">
-                            {data?.stockAmount || 1} in stock
-                          </div>
-                        </div>
-                        <div className="card-bottom style-explode">
-                          <div className="price">
-                            <span>Current Bid</span>
-                            <div className="price-details">
-                              <h5>
-                                {`${data?.price || 0} ${
-                                  chains[data?.chainId || 1]?.currency || "ETH"
-                                } `}
-                              </h5>
-                              <span>
-                                = ${" "}
-                                {(
-                                  data?.price *
-                                  (data?.chainId === TEZOS_CHAIN_ID
-                                    ? 0.79
-                                    : globalETHPrice)
-                                )?.toFixed(2) || 0}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <CardNFT item={data}></CardNFT>
                     </div>
                   ))}
                   {visible < items.length && (

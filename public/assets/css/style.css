@@ -1417,7 +1417,7 @@ header {
 .avatar_popup_wallet {
   position: absolute;
   right: 0;
-  padding: 30px;
+  padding: 15px;
   top: 60px;
   overflow: hidden;
   border-radius: 10px;

@@ -18,6 +18,7 @@ import {
 import { changeConsideringCollectionId } from "../redux/reducers/collection.reducers";
 import { pinFileToIPFS, pinJSONToIPFS } from "../utils/pinatasdk";
 import { createTezosCollection } from "../InteractWithSmartContract/tezosInteracts";
+import { Backdrop, CircularProgress } from "@mui/material";
 
 const Create = () => {
   const categoriesOptions = CATEGORIES;
@@ -38,9 +39,9 @@ const Create = () => {
   const [consideringField, setConsideringField] = useState("");
   const [consideringFieldIndex, setConsideringFieldIndex] = useState(0);
   const [alertParam, setAlertParam] = useState({});
-  const [working, setWorking] = useState(false);
   const [constractAddress, setContractAddress] = useState("");
   const [visible, setVisible] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -63,7 +64,6 @@ const Create = () => {
   const changeBanner = (event) => {
     var file = event.target.files[0];
     if (file == null) return;
-    console.log(file);
     setSelectedBannerFile(file);
     let reader = new FileReader();
     reader.readAsDataURL(file);
@@ -87,7 +87,7 @@ const Create = () => {
   };
 
   const saveCollection = async (params) => {
-    setWorking(true);
+    setProcessing(true);
     let newCollectionId = 0;
     await axios({
       method: "post",
@@ -100,19 +100,19 @@ const Create = () => {
           let isCreatingNewItem = localStorage.getItem("isNewItemCreating");
           if (isCreatingNewItem)
             localStorage.setItem("newCollectionId", newCollectionId);
-          setWorking(false);
+          setProcessing(false);
           dispatch(changeConsideringCollectionId(newCollectionId));
           toast.success("You 've created a new collection.");
           navigate("/collectionList");
         } else {
-          setWorking(false);
+          setProcessing(false);
           toast.success(response.message);
         }
       })
       .catch(function (error) {
         console.log("creating collection error : ", error);
         toast.error("Uploading failed");
-        setWorking(false);
+        setProcessing(false);
       });
   };
 
@@ -134,12 +134,10 @@ const Create = () => {
       return;
     }
     try {
-      setWorking(true);
+      setProcessing(true);
 
       const collectionLogoURL = await pinFileToIPFS(selectedAvatarFile);
       const collectionBannerURL = await pinFileToIPFS(selectedBannerFile);
-      console.log("collectionLogoURL >>> ", collectionLogoURL);
-      console.log("collectionBannerURL >>> ", collectionBannerURL);
 
       let params = {
         collectionLogoURL: collectionLogoURL,
@@ -159,7 +157,7 @@ const Create = () => {
       );
       params.constractAddr = address;
       saveCollection(params);
-      setWorking(false);
+      setProcessing(false);
     } catch (error) {
       console.log(error);
       toast.error("Network error!");
@@ -244,7 +242,7 @@ const Create = () => {
         <div className="themesflat-container">
           <div className="row">
             <div className="col-md-12">
-              <h2 className="tf-title-heading style-1 ct">
+              <h2 className="tf-title-heading style-1 ct mt-2">
                 Create a collection
               </h2>
             </div>
@@ -299,6 +297,7 @@ const Create = () => {
                       src={bannerImg}
                       alt="Banner"
                       style={{
+                        height:"250px",
                         objectFit: "cover",
                       }}
                     />
@@ -369,10 +368,7 @@ const Create = () => {
                         </div>
                       </div>
                     </div>
-                    <button
-                      disabled={working}
-                      onClick={() => createCollection()}
-                    >
+                    <button onClick={() => createCollection()}>
                       Create Collection
                     </button>
                   </div>
@@ -383,6 +379,14 @@ const Create = () => {
         </div>
       </div>
       <Footer />
+      {
+        <Backdrop
+          sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+          open={processing}
+        >
+          <CircularProgress color="inherit" />
+        </Backdrop>
+      }
     </div>
   );
 };

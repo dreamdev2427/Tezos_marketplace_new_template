@@ -150,7 +150,7 @@ const SignUp = () => {
             toast.warn(errMsg);
             return;
           } else if (response.status === 200) {
-            doLogin(email);
+            // doLogin(email);
             return;
           }
           toast.error("Sing up failed with network error.");
@@ -257,7 +257,7 @@ const SignUp = () => {
                       name="pass"
                       tabIndex="3"
                       aria-required="true"
-                      type="text"
+                      type="password"
                       placeholder="Your Password"
                       required
                       onChange={(e) => setPassword(e.target.value)}
@@ -267,7 +267,7 @@ const SignUp = () => {
                       name="passconfirm"
                       tabIndex="3"
                       aria-required="true"
-                      type="text"
+                      type="password"
                       placeholder="Password Confirmation"
                       required
                       onChange={(e) => setPasswordConfirm(e.target.value)}
@@ -287,6 +287,7 @@ const SignUp = () => {
                       className="submit"
                       onClick={(e) => {
                         onClickSignUp(e);
+                        navigate("/")
                       }}
                     >
                       Sign Up

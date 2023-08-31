@@ -16,6 +16,7 @@ import {
   changeWalletStatus,
   selectGlobalProvider,
   selectCurrentUser,
+  changeAuthor,
 } from "../../redux/reducers/auth.reducers.ts";
 import isEmpty from "../../utilities/isEmpty";
 import Web3Modal from "web3modal";
@@ -103,6 +104,7 @@ const Header = () => {
     dispatch(changeWalletAddress(""));
     dispatch(changeGlobalProvider({}));
     dispatch(changeWalletStatus(false));
+    dispatch(changeAuthor(""));
   };
 
   const headerRef = useRef(null);
@@ -220,8 +222,6 @@ const Header = () => {
       dispatch(changeWalletStatus(false));
     }
   };
-
-  // console.log(currentUsr);
 
   return (
     <header id="header_main" className="header_1 js-header" ref={headerRef}>
@@ -364,6 +364,7 @@ const Header = () => {
                     ) : (
                       <>
                         {(isEmpty(currentUsr?.address) === false ||
+                          isEmpty(currentUsr?.email) === false ||
                           isEmpty(currentUsr?.tezosaddress) === false) && (
                           <Link
                             to="/create-item"
@@ -411,6 +412,7 @@ const Header = () => {
                     )}
                   </div>
                   {(isEmpty(currentUsr?.address) === false ||
+                    isEmpty(currentUsr?.email) === false ||
                     isEmpty(currentUsr?.tezosaddress) === false) && (
                     <div className="admin_active " id="header_admin">
                       <div className="header_avatar">
@@ -492,9 +494,9 @@ const Header = () => {
                               <i className="fas fa-pencil-alt"></i>{" "}
                               <span> Edit Profile</span>
                             </Link>
-                            <hr className="hr" style={{width: "100%"}} />
+                            <hr className="hr" style={{ width: "100%" }} />
 
-                            <Link to="/" id="logout">
+                            <Link to="/login" id="logout">
                               <i className="fal fa-sign-out"></i>{" "}
                               <span onClick={handleLogout}> Logout</span>
                             </Link>

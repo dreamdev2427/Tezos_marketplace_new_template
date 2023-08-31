@@ -299,7 +299,7 @@ const EditProfile = () => {
           },
         },
       });
-      const activeAccount = await wallet_instance?.client.getActiveAccount();
+      const activeAccount = "";//await wallet_instance?.client.getActiveAccount();
       if (!activeAccount) {
         await wallet_instance?.requestPermissions({
           network: {
@@ -351,7 +351,7 @@ const EditProfile = () => {
           </div>
         </div>
       </section>
-      <div className="tf-create-item tf-section">
+      <div className="tf-create-item tf-section" style={{paddingTop:"10px"}}>
         <div className="themesflat-container">
           <div className="row">
             <div className="col-xl-3 col-lg-4 col-md-6 col-12">
@@ -368,6 +368,7 @@ const EditProfile = () => {
                     type="file"
                     name="profile"
                     required=""
+                    onChange={changeAvatar}
                   />
                 </div>
                 <Link to="#" className="btn-upload style2">
@@ -407,7 +408,6 @@ const EditProfile = () => {
                         <textarea
                           tabIndex="4"
                           rows="5"
-                          required
                           placeholder="Something about yourself in a few words."
                           value={bioText}
                           onChange={(e) => setBioText(e.target.value)}
@@ -420,7 +420,6 @@ const EditProfile = () => {
                           placeholder="yourwebsite.com"
                           value={websiteText}
                           onChange={(e) => setWebsiteText(e.target.value)}
-                          required
                         />
                       </fieldset>
 

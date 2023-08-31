@@ -46,7 +46,7 @@ import {
   GiveTip2Artist,
 } from "../InteractWithSmartContract/interact";
 
-import { getSystemTime } from "../utils/utils.ts";
+import { getSystemTime, timeStampToDate } from "../utils/utils.ts";
 
 import {
   BACKEND_URL,
@@ -59,9 +59,14 @@ import isEmpty from "../utilities/isEmpty";
 
 import Categories from "../components/layouts/Categories";
 import avt from "../assets/images/avatar/avt.png";
-import CardModal from "../components/layouts/CardModal";
-import Checkout from "../components/layouts/Checkout";
 import Spinner from "../components/Spinner/Spinner";
+import PutSale from "../components/layouts/PutonSale/PutSale";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
+import Clock from "../components/Clock/Clock";
+import Checkout from "../components/layouts/Checkout";
+import Bid from "../components/layouts/Bid";
+import Accept from "../components/layouts/Accept";
 
 var socket = io(`${BACKEND_URL}`);
 
@@ -106,7 +111,6 @@ const ItemDetails = () => {
       )
       .then((result) => {
         const detailOfItem = result.data?.data;
-        console.log(detailOfItem);
         dispatch(changeItemDetail(result.data?.data || {}));
 
         if (isEmpty(currentUsr)) {
@@ -255,6 +259,73 @@ const ItemDetails = () => {
       });
   };
 
+  const cofirmBuy = async () => {
+    setVisibleModalPurchase(false);
+    setProcessing(true);
+    let checkResut = await checkWalletAddrAndChainId();
+    if (!checkResut) {
+      setProcessing(false);
+      return;
+    }
+    if (globalChainId === TEZOS_CHAIN_ID) {
+      try {
+        let success = await dispatch(
+          collectTezosNFT({
+            Tezos: tezosInstance,
+            amount: globalDetailNFT?.price,
+            contract: globalDetailNFT?.collection_id?.contract,
+            id: globalDetailNFT?.tokenId,
+          })
+        );
+        if (success) {
+          await axios
+            .post(`${BACKEND_URL}/api/item/buynow`, {
+              itemId: globalDetailNFT._id,
+              buyer: globalAccount,
+              seller: globalDetailNFT.owner?.tezosaddress,
+              price: globalDetailNFT.price,
+            })
+            .then((response) => {
+              setProcessing(false);
+              if (response.data.code === 0) {
+                toast.success("Successfully bought an item.");
+
+                getNftDetail(itemId || "");
+              } else {
+                toast.error("Server side error.");
+              }
+            })
+            .catch((error) => {
+              toast.error("Server side error.");
+              setProcessing(false);
+            });
+        } else {
+          toast.error("Transaction is failed!");
+          setProcessing(false);
+        }
+      } catch (error) {
+        console.log(error);
+        setProcessing(false);
+      }
+    } else {
+      let result = await buyNow(
+        new Web3(globalProvider),
+        currentUsr?.address,
+        itemId,
+        globalDetailNFT?.price,
+        globalDetailNFT?.chainId || 1
+      );
+      if (result.success === true) {
+        toast.success(
+          result.message +
+            "Check your new item in your profile 'Collectibles' ."
+        );
+
+        getNftDetail(globalDetailNFT?._id);
+      } else toast.error(result.message);
+    }
+    setProcessing(false);
+  };
   //remove sale
   const removeSale = async () => {
     setProcessing(true);
@@ -407,12 +478,140 @@ const ItemDetails = () => {
     setProcessing(false);
   };
 
-  
+  const getLeftDuration = (created, period, curTime) => {
+    var diff = created * 1000 + period * 1000 - curTime;
+    return (diff = diff / 1000);
+  };
+  const onBid = async (bidPrice) => {
+    setVisibleModalBid(false);
+
+    setProcessing(true);
+    let checkResut = await checkWalletAddrAndChainId();
+    if (!checkResut) {
+      setProcessing(false);
+      return;
+    }
+
+    if (
+      getLeftDuration(
+        globalDetailNFT?.auctionStarted,
+        globalDetailNFT?.auctionPeriod,
+        Date.now()
+      ) <= 12
+    ) {
+      setTimeout(() => {
+        setProcessing(false);
+      }, 15000);
+    }
+    if (globalDetailNFT?.chainId === TEZOS_CHAIN_ID) {
+      let result = await dispatch(
+        bidTezosNFT({
+          Tezos: tezosInstance,
+          amount: Number(bidPrice),
+          contract: globalDetailNFT?.collection_id?.contract,
+          id: globalDetailNFT?.tokenId,
+        })
+      );
+
+      if (result) {
+        await axios
+          .post(`${BACKEND_URL}/api/item/placeAbid`, {
+            itemId: globalDetailNFT._id,
+            bidder: currentUsr._id,
+            price: bidPrice,
+          })
+          .then((response) => {
+            if (response.data.code === 0) {
+              setProcessing(false);
+              toast.success("Successfully placed a bid.");
+              getNftDetail(itemId || "");
+            } else {
+              setProcessing(false);
+              toast.error("Server side error.");
+            }
+          })
+          .catch((error) => {
+            setProcessing(false);
+            toast.error("Server side error.");
+          });
+      } else {
+        toast.error("Transaction is failed!");
+        setProcessing(false);
+      }
+    } else {
+      let result = await placeBid(
+        new Web3(globalProvider),
+        currentUsr?.address,
+        itemId,
+        Number(bidPrice),
+        globalDetailNFT?.chainId || 1
+      );
+
+      if (result.success === true) {
+        toast.success(result.message);
+        getNftDetail(globalDetailNFT?._id);
+      } else toast.error(result.message);
+    }
+    setProcessing(false);
+  };
+
+  const onAccept = async () => {
+    setVisibleModalAccept(false);
+
+    setProcessing(true);
+    let checkResut = await checkWalletAddrAndChainId();
+    if (!checkResut) {
+      setProcessing(false);
+      return;
+    }
+    if (globalDetailNFT?.chainId === TEZOS_CHAIN_ID) {
+      let success = await dispatch(
+        acceptAuctionTezosNFT({
+          Tezos: tezosInstance,
+          id: globalDetailNFT?.tokenId,
+          contract: globalDetailNFT?.collection_id?.contract,
+        })
+      );
+      if (success) {
+        axios
+          .post(`${BACKEND_URL}/api/item/acceptBid`, {
+            itemId: globalDetailNFT._id,
+          })
+          .then((response) => {
+            if (response.data.code === 0) {
+              getNftDetail(itemId || "");
+              toast.success("You sold an item.");
+            } else toast.error("Server side error.");
+            setProcessing(false);
+          })
+          .catch((error) => {
+            setProcessing(false);
+          });
+      } else {
+        toast.error("Transaction Failed");
+        setProcessing(false);
+        return;
+      }
+    } else {
+      let result = await acceptOrEndBid(
+        new Web3(globalProvider),
+        currentUsr?.address,
+        itemId,
+        globalDetailNFT?.chainId || 1
+      );
+      if (result.success === true) {
+        toast.success(result.message);
+
+        getNftDetail(globalDetailNFT?._id);
+      } else toast.error(result.message);
+      setProcessing(false);
+    }
+  };
+
   return (
     <div className="item-details">
       <Header />
       <div className="tf-section tf-item-details">
-      <Spinner isLoading={loader} />
         <div className="themesflat-container">
           <div className="row">
             <div className="col-xl-6 col-md-12">
@@ -424,7 +623,11 @@ const ItemDetails = () => {
                         ? `${ipfsUrl}${globalDetailNFT?.logoURL}`
                         : ""
                     }
-                    style={{height:"500px", width:"100%", objectFit:"cover"}}
+                    style={{
+                      height: "500px",
+                      width: "100%",
+                      objectFit: "cover",
+                    }}
                     alt="Avatar"
                   />
                 </div>
@@ -491,7 +694,7 @@ const ItemDetails = () => {
                           />
                         </div>
                         <div className="info">
-                          <span>Create By</span>
+                          <span>Created By</span>
                           <h6>
                             <Link
                               to={`/author/${globalDetailNFT?.creator?._id}`}
@@ -580,10 +783,56 @@ const ItemDetails = () => {
                     </div>
                     {globalDetailNFT?.isSale === 2 && (
                       <div className="item count-down">
-                        <span className="heading style-2">Countdown</span>
-                        <Countdown date={Date.now() + 500000000}>
-                          <span>You are good to go!</span>
-                        </Countdown>
+                        <div className="py-9">
+                          <div className="space-y-5">
+                            <div className="flex align-items-center space-x-2 text-neutral-500 dark:text-neutral-400 ">
+                              <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M20.75 13.25C20.75 18.08 16.83 22 12 22C7.17 22 3.25 18.08 3.25 13.25C3.25 8.42 7.17 4.5 12 4.5C16.83 4.5 20.75 8.42 20.75 13.25Z"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                                <path
+                                  d="M12 8V13"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                                <path
+                                  d="M9 2H15"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                  strokeMiterlimit="10"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                              <span className="px-1 leading-none">
+                                {auctionEnded
+                                  ? "Auction period has expired"
+                                  : "Auction ending in:"}{" "}
+                              </span>
+                            </div>
+                            <div className="flex justify-content-center">
+                              {!auctionEnded && (
+                                <Clock
+                                  nftItem={globalDetailNFT}
+                                  sysTime={sysTime}
+                                  setAuctionEnded={() => setAuctionEnded(true)}
+                                />
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -692,22 +941,26 @@ const ItemDetails = () => {
                                     <div className="author-infor">
                                       <div className="name">
                                         <h6>
-                                          <Link to="/author-02">
-                                            {item.name}{" "}
+                                          <Link
+                                            to={`/author/${item?.user_id?._id}`}
+                                          >
+                                            {item?.user_id?.nickname}{" "}
                                           </Link>
                                         </h6>{" "}
                                         <span> place a bid</span>
                                       </div>
-                                      <span className="time">{item.time}</span>
+                                      <span className="time">
+                                        {item.user_id?.createdAt}
+                                      </span>
                                     </div>
                                   </div>
                                 </div>
                                 <div className="price">
                                   <h5>
                                     {`${item?.price || 0} ${
-                                      chains[item?.chainId || 1]?.currency ||
-                                      "ETH"
-                                    }s by `}
+                                      chains[globalDetailNFT?.chainId || 1]
+                                        ?.currency || "ETH"
+                                    }`}
                                   </h5>
                                   <span>
                                     = ${" "}
@@ -730,7 +983,7 @@ const ItemDetails = () => {
                           <li>
                             <div className="content">
                               <div className="client">
-                                <div className="sc-author-box style-2">
+                                <div className="sc-author-box style-2 align-items-center">
                                   <div className="author-avatar">
                                     <Link
                                       to={`/author/${globalDetailNFT?.owner?._id}`}
@@ -748,15 +1001,15 @@ const ItemDetails = () => {
                                     <div className="badge"></div>
                                   </div>
                                   <div className="author-infor">
-                                    <div className="name">
+                                    <div className="d-flex-col align-items-center">
+                                      <span>Owner </span>
                                       <h6>
                                         <Link
                                           to={`/author/${globalDetailNFT?.owner?._id}`}
                                         >
-                                          {globalDetailNFT.nickname}{" "}
+                                          {globalDetailNFT.owner?.nickname}{" "}
                                         </Link>
                                       </h6>{" "}
-                                      <span>Owner </span>
                                     </div>
                                   </div>
                                 </div>
@@ -796,7 +1049,7 @@ const ItemDetails = () => {
                                               <Link
                                                 to={`/author/${item?.owner._id}`}
                                               >
-                                                {item?.owner.name}{" "}
+                                                {item?.owner.nickname}{" "}
                                               </Link>
                                             </h6>{" "}
                                             <span>Owned by </span>
@@ -821,13 +1074,41 @@ const ItemDetails = () => {
           </div>
         </div>
       </div>
-      <Checkout
+      <PutSale
         onOk={onPutSale}
         show={visibleModalSale}
         onHide={() => setVisibleModalSale(false)}
       />
+      <Checkout
+        onOk={cofirmBuy}
+        show={visibleModalPurchase}
+        nft={globalDetailNFT}
+        onHide={() => setVisibleModalPurchase(false)}
+      />
+      <Bid
+        nft={globalDetailNFT}
+        show={visibleModalBid}
+        onOk={onBid}
+        onHide={() => setVisibleModalBid(false)}
+      />
+      <Accept
+        onOk={onAccept}
+        show={visibleModalAccept}
+        onHide={() => {
+          setVisibleModalAccept(false);
+        }}
+        nft={globalDetailNFT}
+      />
       <Categories />
       <Footer />
+      {
+        <Backdrop
+          sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+          open={processing}
+        >
+          <CircularProgress color="inherit" />
+        </Backdrop>
+      }
     </div>
   );
 };
