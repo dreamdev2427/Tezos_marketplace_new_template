@@ -607,8 +607,7 @@ const ItemDetails = () => {
       setProcessing(false);
     }
   };
-
-  console.log(globalOwnHistoryOfNFT)
+ 
   return (
     <div className="item-details">
       <Header />
@@ -640,7 +639,7 @@ const ItemDetails = () => {
                   <h2 className="style2">{globalDetailNFT?.name}</h2>
                   <div className="meta-item">
                     <div className="left">
-                      <span className="viewed eye">0</span>
+                      <span className="viewed eye">{globalDetailNFT?.views}</span>
                       <span
                         onClick={() =>
                           setFavItem(globalDetailNFT?._id, currentUsr?._id)

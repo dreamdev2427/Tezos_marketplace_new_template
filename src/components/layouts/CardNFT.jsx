@@ -1,9 +1,20 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { TEZOS_CHAIN_ID, ipfsUrl } from "../../config";
+import { BACKEND_URL, TEZOS_CHAIN_ID, ipfsUrl } from "../../config";
 import avt from "../../assets/images/avatar/avt.png";
+import axios from "axios";
 
 const CardNFT = (props) => {
+  const updateViews = () => {
+    if (props.item._id?.toString()?.length === 24) {
+      axios
+        .post(`${BACKEND_URL}/api/item/updateViews`, {
+          itemId: props.item?._id,
+        })
+        .then((response) => {})
+        .catch((error) => {});
+    }
+  };
   return (
     <div className={`sc-card-product`}>
       <div className="card-media">
@@ -12,6 +23,7 @@ const CardNFT = (props) => {
             src={props.item.logoURL ? `${ipfsUrl}${props.item.logoURL}` : ""}
             style={{ height: "250px", objectFit: "cover" }}
             alt="axies"
+            onClick={updateViews}
           />
         </Link>
         <div className="wishlist-button heart">
@@ -19,7 +31,7 @@ const CardNFT = (props) => {
         </div>
       </div>
       <div className="card-title">
-        <h5 className="style2">
+        <h5 className="style2" onClick={updateViews}>
           <Link to={`/item-details/${props.item._id}`}>
             {props.item.description || "No name"}
           </Link>

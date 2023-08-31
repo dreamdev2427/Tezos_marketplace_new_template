@@ -427,16 +427,17 @@ const Author = () => {
                       return (
                         index < 3 && (
                           <TabPanel key={index}>
-                            {item.dataContent
-                              .slice(0, visible)
-                              .map((data, index) => (
-                                <div
-                                  key={index}
-                                  className="col-xl-3 col-lg-4 col-md-6 col-12"
-                                >
-                                  <CardNFT item={data}></CardNFT>
-                                </div>
-                              ))}
+                            {item.dataContent.length > 0 &&
+                              item.dataContent
+                                .slice(0, visible)
+                                .map((data, index) => (
+                                  <div
+                                    key={index}
+                                    className="col-xl-3 col-lg-4 col-md-6 col-12"
+                                  >
+                                    <CardNFT item={data}></CardNFT>
+                                  </div>
+                                ))}
                             {visible < item.dataContent.length && (
                               <div className="col-md-12 wrap-inner load-more text-center">
                                 <Link
@@ -457,75 +458,62 @@ const Author = () => {
                       return (
                         index > 2 && (
                           <TabPanel key={index}>
-                            <div
-                              key={index}
-                              className="col-lg-4 col-md-6 col-12"
-                            >
-                              <div className="sc-card-collection style-2">
-                                <div className="card-bottom">
-                                  <div className="author">
-                                    <div className="sc-author-box style-2">
-                                      <div className="author-avatar">
-                                        <img
-                                          src={`${ipfsUrl}${
-                                            item.avatar ? item.avatar : avt
-                                          }`}
-                                          alt="Avatar"
-                                          className="avatar"
-                                        />
-                                        <div className="badge"></div>
+                            {item.dataContent
+                              .slice(0, visible)
+                              .map((data, index) => (
+                                <div
+                                  key={index}
+                                  className="col-lg-4 col-md-6 col-12"
+                                >
+                                  <div className="sc-card-collection style-2">
+                                    <div className="card-bottom">
+                                      <div className="author">
+                                        <div className="sc-author-box style-2">
+                                          <Link to={`/author/${data?._id}`}>
+                                            <div className="author-avatar">
+                                              <img
+                                                src={`${ipfsUrl}${
+                                                  data.avatar
+                                                    ? data.avatar
+                                                    : avt
+                                                }`}
+                                                alt="Avatar"
+                                                className="avatar"
+                                              />
+                                              <div className="badge"></div>
+                                            </div>
+                                          </Link>
+                                        </div>
+                                        <div className="content">
+                                          <h4>
+                                            <Link to={`/author/${data?._id}`}>
+                                              {data.name}
+                                            </Link>
+                                          </h4>
+                                          <div className="infor">
+                                            <span>{data.userBio}</span>
+                                          </div>
+                                        </div>
                                       </div>
-                                    </div>
-                                    <div className="content">
-                                      <h4>
-                                        <Link to={`/author/${item?._id}`}>
-                                          {item.nickname}
-                                        </Link>
-                                      </h4>
-                                      <div className="infor">
-                                        <span>{item.userBio}</span>
-                                      </div>
+                                      <Link className="sc-button fl-button pri-3">
+                                        <span>Following</span>
+                                      </Link>
                                     </div>
                                   </div>
-                                  <Link className="sc-button fl-button pri-3">
-                                    <span>Following</span>
-                                  </Link>
                                 </div>
-                                <Link to={`/author/${item?._id}`}>
-                                  <div className="media-images-collection">
-                                    {item.gallery &&
-                                      item.gallery.length > 0 && (
-                                        <>
-                                          <div className="box-left">
-                                            <img
-                                              src={`${ipfsUrl}${item.gallery[0]}`}
-                                              alt="NFT"
-                                            />
-                                          </div>
-                                          <div className="box-right">
-                                            <div className="top-img">
-                                              <img
-                                                src={`${ipfsUrl}${item.gallery[1]}`}
-                                                alt="NFT"
-                                              />
-                                              <img
-                                                src={`${ipfsUrl}${item.gallery[2]}`}
-                                                alt="NFT"
-                                              />
-                                            </div>
-                                            <div className="bottom-img">
-                                              <img
-                                                src={`${ipfsUrl}${item.gallery[3]}`}
-                                                alt="NFT"
-                                              />
-                                            </div>
-                                          </div>
-                                        </>
-                                      )}
-                                  </div>
+                              ))}
+                            {visible < item.dataContent.length && (
+                              <div className="col-md-12 wrap-inner load-more text-center">
+                                <Link
+                                  to="#"
+                                  id="load-more"
+                                  className="sc-button loadmore fl-button pri-3"
+                                  onClick={showMoreItems}
+                                >
+                                  <span>Load More</span>
                                 </Link>
                               </div>
-                            </div>
+                            )}
                           </TabPanel>
                         )
                       );
