@@ -394,13 +394,19 @@ const Header = () => {
                         >
                           <div className="links">
                             <Link
-                              onClick={() => switchNetwork(platformChainIds[0])}
+                              onClick={() => {
+                                setWalletDropOpen(false);
+                                switchNetwork(platformChainIds[0])
+                              }}
                             >
                               <i class="fas fa-wallet"></i>
                               <span>{chains[platformChainIds[0]].name}</span>
                             </Link>
                             <Link
-                              onClick={() => handleConnect2Tezos()}
+                              onClick={() => {
+                                setWalletDropOpen(false);
+                                handleConnect2Tezos()
+                              }}
                               className="mt-10"
                             >
                               <i class="fas fa-wallet"></i>

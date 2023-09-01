@@ -15,7 +15,7 @@ import { useAppSelector } from "../../redux/hooks.ts";
 import { selectCurrentUser } from "../../redux/reducers/auth.reducers.ts";
 
 const Slider = (props) => {
-  const currentUsr = useAppSelector(selectCurrentUser);
+  const currentusr = useAppSelector(selectCurrentUser);
   const data = props.data;
   return (
     <div className="mainslider">
@@ -25,7 +25,7 @@ const Slider = (props) => {
         slidesPerView={1}
         navigation
         scrollbar={{ draggable: true }}
-        currentUsr={currentUsr}
+        currentUsr={currentusr}
       >
         {data.map((item, index) => (
           <SwiperSlide key={index} className={item.class}>

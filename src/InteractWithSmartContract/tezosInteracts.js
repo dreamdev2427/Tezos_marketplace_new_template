@@ -188,6 +188,50 @@ export const mintTezosNFT = ({
   };
 };
 
+export const burnTezosNFT = ({ Tezos, tokencontract, amount, tokenId }) => {
+  return async () => {
+    try {
+      const contract = await Tezos.wallet.at(tezosconfig.factoryAddress);
+      const op = await contract.methods
+        .burn_token(amount, tokencontract, tokenId)
+        .send();
+      await op.confirmation();
+      return true;
+    } catch (e) {
+      console.log(e);
+      return false;
+    }
+  };
+};
+
+export const transferTezosNFT = ({
+  Tezos,
+  tokencontract,
+  sender,
+  receiver,
+  amount,
+  tokenId,
+}) => {
+  return async () => {
+    try {
+      const contract = await Tezos.wallet.at(tezosconfig.factoryAddress);
+      const op = await contract.methods
+        .transfer_token(tokencontract, [
+          {
+            from_: sender,
+            txs: [{ to_: receiver, token_id: tokenId, amount: amount }],
+          },
+        ])
+        .send();
+      await op.confirmation();
+      return true;
+    } catch (e) {
+      console.log(e);
+      return false;
+    }
+  };
+};
+
 export const createTezosCollection = ({ Tezos, metadata }) => {
   return async () => {
     return new Promise(async (resolve, reject) => {
@@ -288,7 +332,7 @@ export const acceptAuctionTezosNFT = ({ Tezos, contract, id }) => {
 export const delistTezosNFT = async ({ Tezos, id, contract, instant }) => {
   try {
     const auction_contract = await Tezos.wallet.at(tezosconfig.auctionAddress);
-    if(instant) {
+    if (instant) {
       const delistOp = await auction_contract.methods
         .cancel_sale(contract, id)
         .send();
@@ -296,9 +340,9 @@ export const delistTezosNFT = async ({ Tezos, id, contract, instant }) => {
       return 0;
     } else {
       const delistOp = await auction_contract.methods
-      .cancel_auction(contract, id)
-      .send();
-    await delistOp.confirmation();
+        .cancel_auction(contract, id)
+        .send();
+      await delistOp.confirmation();
     }
   } catch (e) {
     console.log(e);
@@ -339,7 +383,7 @@ export const listTezosNFT = async ({
           sender, // highest bidder
           Math.floor(Date.now() / 1000), // start time
           contract, // Token(address)
-          id, // Token(token_id)
+          id // Token(token_id)
         )
         .send();
       await listOp.confirmation();

@@ -33,6 +33,8 @@ import {
   listTezosNFT,
   bidTezosNFT,
   acceptAuctionTezosNFT,
+  burnTezosNFT,
+  transferTezosNFT,
 } from "../InteractWithSmartContract/tezosInteracts";
 
 import {
@@ -44,6 +46,8 @@ import {
   placeBid,
   singleMintOnSale,
   GiveTip2Artist,
+  burnNFT,
+  transferNFT,
 } from "../InteractWithSmartContract/interact";
 
 import { getSystemTime, timeStampToDate } from "../utils/utils.ts";
@@ -67,6 +71,8 @@ import Clock from "../components/Clock/Clock";
 import Checkout from "../components/layouts/Checkout";
 import Bid from "../components/layouts/Bid";
 import Accept from "../components/layouts/Accept";
+import Burn from "../components/layouts/Burn";
+import Transfer from "../components/layouts/Transfer";
 
 var socket = io(`${BACKEND_URL}`);
 
@@ -88,16 +94,18 @@ const ItemDetails = () => {
   const [visibleModalPurchase, setVisibleModalPurchase] = useState(false);
   const [visibleModalBid, setVisibleModalBid] = useState(false);
   const [visibleModalAccept, setVisibleModalAccept] = useState(false);
-  const [processing, setProcessing] = useState(false);
+  const [visibleModalBurn, setVisibleModalBurn] = useState(false);
   const [visibleModalSale, setVisibleModalSale] = useState(false);
+  const [visibleModalTransfer, setVisibleModalTransfer] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const [auctionEnded, setAuctionEnded] = useState(false);
   const [refresh, setRefresh] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [sysTime, setSysTime] = useState(0);
-  const [loader, setLoader] = useState(false);
+  const [showDetailMenu, setShowDetailMenu] = useState(false);
 
   const getNftDetail = async (id) => {
-    setLoader(true);
+    setProcessing(true);
 
     await axios
       .post(
@@ -148,7 +156,7 @@ const ItemDetails = () => {
         dispatch(changeItemOwnHistory(result.data.data || []));
       })
       .catch(() => {});
-    setLoader(false);
+    setProcessing(false);
   };
 
   const checkIsLiked = () => {
@@ -607,7 +615,182 @@ const ItemDetails = () => {
       setProcessing(false);
     }
   };
- 
+
+  const burnToken = async () => {
+    setVisibleModalBurn(false);
+
+    if (globalDetailNFT?.owner._id !== currentUsr?._id) {
+      toast.warn("You are not the owner of this nft.");
+      return;
+    }
+    setProcessing(true);
+
+    let iHaveit;
+    try {
+      if (globalDetailNFT?.chainId === TEZOS_CHAIN_ID) {
+        let success = await dispatch(
+          burnTezosNFT({
+            Tezos: tezosInstance,
+            tokencontract: globalDetailNFT?.collection_id?.contract,
+            amount: 1,
+            tokenId: globalDetailNFT?.tokenId,
+          })
+        );
+        if (success) {
+          axios
+            .post(`${BACKEND_URL}/api/item/burnNFT`, {
+              itemId: globalDetailNFT._id,
+            })
+            .then((response) => {
+              if (response.data.code === 0) {
+                toast.success("You burnt an item.");
+                navigate(
+                  `/collectionItems/${globalDetailNFT?.collection_id?._id}`
+                );
+              } else toast.error("Server side error.");
+              setProcessing(false);
+            })
+            .catch((error) => {
+              setProcessing(false);
+            });
+        } else {
+          toast.error("Transaction Failed");
+          setProcessing(false);
+          return;
+        }
+      } else {
+        iHaveit = await getBalanceOf(
+          new Web3(globalProvider),
+          currentUsr?.address,
+          globalDetailNFT?._id,
+          globalDetailNFT?.chainId || 1
+        );
+        if (iHaveit === 0) {
+          setProcessing(false);
+          toast.warn(
+            "You cannot burn NFT while it is on sale or you've not minted it ever."
+          );
+          return;
+        }
+        if (iHaveit && iHaveit.message) {
+          toast.warn(iHaveit.message);
+        }
+        let checkResut = await checkWalletAddrAndChainId();
+        if (!checkResut) {
+          setProcessing(false);
+          return;
+        }
+
+        let result = await burnNFT(
+          new Web3(globalProvider),
+          currentUsr?.address,
+          globalDetailNFT?._id,
+          globalDetailNFT?.chainId || 1
+        );
+        if (result.success === true) {
+          toast.success(
+            result.message +
+              "Check your new item in your profile 'Collectibles' ."
+          );
+          navigate(`/collectionItems/${globalDetailNFT?.collection_id?._id}`);
+        } else toast.error(result.message);
+      }
+      setProcessing(false);
+    } catch (err) {
+      setProcessing(false);
+      console.log("failed on burn token : ", err);
+    }
+  };
+
+  const transferToken = async (toAddr) => {
+    setVisibleModalTransfer(false);
+
+    if (globalDetailNFT?.owner._id !== currentUsr?._id) {
+      toast.warn("You are not the owner of this nft.");
+      return;
+    }
+    setProcessing(true);
+    let iHaveit;
+    try {
+      if (globalDetailNFT?.chainId === TEZOS_CHAIN_ID) {
+        let success = await dispatch(
+          transferTezosNFT({
+            Tezos: tezosInstance,
+            tokencontract: globalDetailNFT?.collection_id?.contract,
+            amount: 1,
+            sender: globalAccount,
+            receiver: toAddr,
+            tokenId: globalDetailNFT?.tokenId,
+          })
+        );
+
+        if (success) {
+          await axios
+            .post(`${BACKEND_URL}/api/item/transferedNFT`, {
+              itemId: globalDetailNFT._id,
+              sender: globalAccount,
+              receiver: toAddr,
+            })
+            .then((response) => {
+              if (response.data.code === 0) {
+                toast.success("You 've sent an item.");
+                getNftDetail(globalDetailNFT._id || "");
+              } else {
+                toast.error("Internal server error.");
+              }
+            })
+            .catch((error) => {
+              toast.error("Internal server error.");
+            });
+        } else {
+          toast.error("Transaction Failed");
+        }
+      } else {
+        iHaveit = await getBalanceOf(
+          new Web3(globalProvider),
+          currentUsr?.address,
+          globalDetailNFT?._id,
+          globalDetailNFT?.chainId || 1
+        );
+        if (iHaveit === 0) {
+          setProcessing(false);
+          toast.warn(
+            "You cannot transfer NFT while it is on sale or you've not minted it ever."
+          );
+          return;
+        }
+        if (iHaveit && iHaveit.message) {
+          toast.warn(iHaveit.message);
+        }
+        let checkResut = await checkWalletAddrAndChainId();
+        if (!checkResut) {
+          setProcessing(false);
+          return;
+        }
+        let result = await transferNFT(
+          new Web3(globalProvider),
+          currentUsr?.address,
+          toAddr,
+          globalDetailNFT?._id,
+          globalDetailNFT?.chainId || 1
+        );
+        if (result.success === true) {
+          toast.success(
+            result.message +
+              "Check your new item in your profile 'Collectibles' ."
+          );
+
+          getNftDetail(globalDetailNFT?._id);
+        } else toast.error(result.message);
+      }
+      setProcessing(false);
+    } catch (err) {
+      setProcessing(false);
+      console.log("failed on transfer token : ", err);
+    }
+  };
+
+  console.log(globalDetailNFT);
   return (
     <div className="item-details">
       <Header />
@@ -639,7 +822,9 @@ const ItemDetails = () => {
                   <h2 className="style2">{globalDetailNFT?.name}</h2>
                   <div className="meta-item">
                     <div className="left">
-                      <span className="viewed eye">{globalDetailNFT?.views}</span>
+                      <span className="viewed eye">
+                        {globalDetailNFT?.views}
+                      </span>
                       <span
                         onClick={() =>
                           setFavItem(globalDetailNFT?._id, currentUsr?._id)
@@ -653,10 +838,45 @@ const ItemDetails = () => {
                         </span>
                       </span>
                     </div>
-                    <div className="right">
-                      <Link to="#" className="share"></Link>
-                      <Link to="#" className="option"></Link>
-                    </div>
+                    {globalDetailNFT.creator._id == currentUsr._id && (
+                      <div className="right">
+                        <Link
+                          to="#"
+                          className="option"
+                          onClick={() => {
+                            setShowDetailMenu(!showDetailMenu);
+                          }}
+                        ></Link>
+                        <div
+                          className={`avatar_popup_wallet  mt-20 ${
+                            showDetailMenu ? "visible" : ""
+                          }`}
+                          style={{ right: "4%", top: "85px", zIndex: 999 }}
+                        >
+                          <div className="links">
+                            <Link
+                              onClick={() => {
+                                setShowDetailMenu(false);
+                                setVisibleModalBurn(true);
+                              }}
+                            >
+                              <i className="fas fa-fire"></i>
+                              Burn
+                            </Link>
+                            <Link
+                              className="mt-10"
+                              onClick={() => {
+                                setShowDetailMenu(false);
+                                setVisibleModalTransfer(true);
+                              }}
+                            >
+                              <i className="fas fa-paper-plane"></i>
+                              Transfer
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="client-infor sc-card-product">
                     <div className="meta-info">
@@ -1098,6 +1318,21 @@ const ItemDetails = () => {
           setVisibleModalAccept(false);
         }}
         nft={globalDetailNFT}
+      />
+      <Burn
+        onOk={burnToken}
+        show={visibleModalBurn}
+        onHide={() => {
+          setVisibleModalBurn(false);
+        }}
+      />
+      <Transfer
+        onOk={transferToken}
+        show={visibleModalTransfer}
+        onHide={() => {
+          setVisibleModalTransfer(false);
+        }}
+        chainId={globalDetailNFT?.chainId}
       />
       <Categories />
       <Footer />
