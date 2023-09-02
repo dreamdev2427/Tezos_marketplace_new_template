@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import Header from "../components/header/Header";
 import Footer from "../components/footer/Footer";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import Countdown from "react-countdown";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import "react-tabs/style/react-tabs.css";
 import axios from "axios";
@@ -164,7 +163,7 @@ const ItemDetails = () => {
       if (!globalDetailNFT.likes) {
         setIsLiked(false);
       }
-      var isIn = globalDetailNFT?.likes?.includes(currentUsr._id) || false;
+      var isIn = globalDetailNFT?.likes?.includes(currentUsr?._id) || false;
       setIsLiked(isIn);
     }
   };
@@ -288,7 +287,7 @@ const ItemDetails = () => {
         if (success) {
           await axios
             .post(`${BACKEND_URL}/api/item/buynow`, {
-              itemId: globalDetailNFT._id,
+              itemId: globalDetailNFT?._id,
               buyer: globalAccount,
               seller: globalDetailNFT.owner?.tezosaddress,
               price: globalDetailNFT.price,
@@ -524,8 +523,8 @@ const ItemDetails = () => {
       if (result) {
         await axios
           .post(`${BACKEND_URL}/api/item/placeAbid`, {
-            itemId: globalDetailNFT._id,
-            bidder: currentUsr._id,
+            itemId: globalDetailNFT?._id,
+            bidder: currentUsr?._id,
             price: bidPrice,
           })
           .then((response) => {
@@ -583,7 +582,7 @@ const ItemDetails = () => {
       if (success) {
         axios
           .post(`${BACKEND_URL}/api/item/acceptBid`, {
-            itemId: globalDetailNFT._id,
+            itemId: globalDetailNFT?._id,
           })
           .then((response) => {
             if (response.data.code === 0) {
@@ -639,7 +638,7 @@ const ItemDetails = () => {
         if (success) {
           axios
             .post(`${BACKEND_URL}/api/item/burnNFT`, {
-              itemId: globalDetailNFT._id,
+              itemId: globalDetailNFT?._id,
             })
             .then((response) => {
               if (response.data.code === 0) {
@@ -727,14 +726,14 @@ const ItemDetails = () => {
         if (success) {
           await axios
             .post(`${BACKEND_URL}/api/item/transferedNFT`, {
-              itemId: globalDetailNFT._id,
+              itemId: globalDetailNFT?._id,
               sender: globalAccount,
               receiver: toAddr,
             })
             .then((response) => {
               if (response.data.code === 0) {
                 toast.success("You 've sent an item.");
-                getNftDetail(globalDetailNFT._id || "");
+                getNftDetail(globalDetailNFT?._id || "");
               } else {
                 toast.error("Internal server error.");
               }
@@ -790,7 +789,6 @@ const ItemDetails = () => {
     }
   };
 
-  console.log(globalDetailNFT);
   return (
     <div className="item-details">
       <Header />
@@ -838,7 +836,7 @@ const ItemDetails = () => {
                         </span>
                       </span>
                     </div>
-                    {globalDetailNFT.creator._id == currentUsr._id && (
+                    {globalDetailNFT?.creator._id === currentUsr?._id && (
                       <div className="right">
                         <Link
                           to="#"
@@ -1060,7 +1058,7 @@ const ItemDetails = () => {
                   currentUsr &&
                   globalDetailNFT.isSale === 1 &&
                   globalDetailNFT.owner &&
-                  globalDetailNFT.owner._id !== currentUsr._id ? (
+                  globalDetailNFT.owner._id !== currentUsr?._id ? (
                     <Link
                       onClick={() => setVisibleModalPurchase(true)}
                       className="sc-button loadmore style bag fl-button pri-3"
@@ -1070,9 +1068,9 @@ const ItemDetails = () => {
                   ) : null}
                   {globalDetailNFT &&
                   currentUsr &&
-                  globalDetailNFT.isSale === 2 &&
-                  globalDetailNFT.owner &&
-                  globalDetailNFT.owner._id !== currentUsr._id &&
+                  globalDetailNFT?.isSale === 2 &&
+                  globalDetailNFT?.owner &&
+                  globalDetailNFT?.owner._id !== currentUsr?._id &&
                   !auctionEnded ? (
                     <Link
                       className="sc-button loadmore style bag fl-button pri-3"
@@ -1085,7 +1083,7 @@ const ItemDetails = () => {
                   currentUsr &&
                   globalDetailNFT.isSale === 2 &&
                   globalDetailNFT.owner &&
-                  globalDetailNFT.owner._id === currentUsr._id ? (
+                  globalDetailNFT?.owner._id === currentUsr?._id ? (
                     globalDetailNFT.bids.length > 0 ? (
                       <Link
                         className="sc-button loadmore style bag fl-button pri-3"
@@ -1105,7 +1103,7 @@ const ItemDetails = () => {
                   {globalDetailNFT &&
                     currentUsr &&
                     globalDetailNFT.owner &&
-                    globalDetailNFT.owner._id === currentUsr._id &&
+                    globalDetailNFT?.owner._id === currentUsr?._id &&
                     globalDetailNFT.isSale === 0 && (
                       <Link
                         className="sc-button loadmore style bag fl-button pri-3"
@@ -1117,7 +1115,7 @@ const ItemDetails = () => {
                   {globalDetailNFT &&
                     currentUsr &&
                     globalDetailNFT.owner &&
-                    globalDetailNFT.owner._id === currentUsr._id &&
+                    globalDetailNFT?.owner._id === currentUsr?._id &&
                     globalDetailNFT.isSale === 1 && (
                       <Link
                         className="sc-button loadmore style bag fl-button pri-3"

@@ -18,6 +18,7 @@ import isEmpty from "../utilities/isEmpty";
 
 import avt from "../assets/images/avatar/avt.png";
 import CardNFT from "../components/layouts/CardNFT";
+import { Backdrop, CircularProgress } from "@mui/material";
 
 const CollectionItems = () => {
   const { collectionId } = useParams();
@@ -32,11 +33,130 @@ const CollectionItems = () => {
   const [start, setStart] = useState(0);
   const [last, setLast] = useState(8);
   const [viewNoMore, setViewNoMore] = useState(false);
-
+  const [processing, setProcessing] = useState(false);
   const [visible, setVisible] = useState(8);
+  const [collectionMinPrice, setCollectionMinPrice] = useState(0);
 
   const showMoreItems = () => {
     setVisible((prevValue) => prevValue + 4);
+  };
+
+  const calcFloorPrice = (items) => {
+    let isCollectionOnSale = false;
+    for (let idx = 0; idx < items.length; idx++) {
+      if (items[idx].isSale > 0) {
+        isCollectionOnSale = true;
+        break;
+      }
+    }
+
+    if (isCollectionOnSale === true) {
+      let minPrice = 0;
+      for (let i = 1; i < items.length; i++) {
+        if (items[i].isSale === 0) continue;
+        if (items[i]?.isSale === 2) {
+          if (items[i].bids && items[i].bids.length > 0) {
+            minPrice = items[i].bids[items[i].bids.length - 1].price;
+          }
+        } else {
+          minPrice = items[i]?.price;
+        }
+        break;
+      }
+
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].isSale === 0) continue;
+        if (items[i].isSale === 2) {
+          if (items[i].bids && items[i].bids.length > 0) {
+            if (minPrice > items[i].bids[items[i].bids.length - 1].price)
+              minPrice = items[i].bids[items[i].bids.length - 1].price;
+          }
+        } else {
+          if (minPrice > items[i].price) minPrice = items[i].price;
+        }
+      }
+      setCollectionMinPrice(minPrice);
+    } else {
+      setCollectionMinPrice(0);
+    }
+  };
+
+  const getCollectionList = (reStart, useStart) => {
+    let filterParams = JSON.parse(
+      localStorage.getItem("searchFilter").toString()
+    );
+    let currentItemCount = localStorage.getItem("currentItemIndex");
+    if (currentItemCount === null || currentItemCount === undefined) {
+      localStorage.setItem("currentItemIndex", "0");
+    }
+
+    var param = {
+      start: reStart === true ? useStart : Number(currentItemCount),
+      last:
+        reStart === true
+          ? useStart + 10
+          : Number(currentItemCount) + Number(10),
+      date: filterParams.date,
+      category: filterParams.category,
+      status: filterParams.status,
+    };
+    param.collId = collectionId;
+    param.userId = currentUsr?._id;
+
+    if (reStart) {
+      localStorage.setItem("currentItemIndex", "0");
+      setItems([]);
+    }
+    setProcessing(true);
+    setTimeout(() => {
+      setViewNoMore(false);
+    }, 2000);
+    axios
+      .post(`${BACKEND_URL}/api/collection/onSearchInACollection`, param)
+      .then((result) => {
+        var list = [];
+        let currentInfo = localStorage.getItem("hideCollections");
+        if (currentInfo === null || !currentInfo) currentInfo = "{}";
+        else currentInfo = JSON.parse(currentInfo.toString());
+
+        let currentInfo1 = localStorage.getItem("hideItems");
+        if (currentInfo1 === null || currentInfo1 === undefined)
+          currentInfo1 = "{}";
+        else currentInfo1 = JSON.parse(currentInfo1.toString());
+        for (var i = 0; i < result.data.list.length; i++) {
+          var item = result.data.list[i].item_info;
+          item.isLiked = result.data.list[i].item_info.likes.includes(
+            currentUsr._id
+          );
+          item.owner = result.data.list[i].owner_info;
+          item.users = [{ avatar: result.data.list[i].creator_info.avatar }];
+          list.push(item);
+        }
+        if (isEmpty(list)) {
+          setViewNoMore(true);
+        }
+        if (reStart) {
+          localStorage.setItem(
+            "currentItemIndex",
+            (Number(list.length) + useStart).toString()
+          );
+          setItems(list);
+          calcFloorPrice(list);
+        } else {
+          setItems((items) => {
+            localStorage.setItem(
+              "currentItemIndex",
+              (Number(currentItemCount) + Number(list.length)).toString()
+            );
+            calcFloorPrice(items.concat(list));
+            return items.concat(list);
+          });
+        }
+        setProcessing(false);
+      })
+      .catch(() => {
+        setProcessing(false);
+      });
   };
 
   const itemsOfCollectionList = () => {
@@ -85,7 +205,7 @@ const CollectionItems = () => {
       })
       .catch(() => {});
 
-    itemsOfCollectionList();
+      getCollectionList(true, 0);
   }, [collectionId]);
 
   return (
@@ -123,9 +243,10 @@ const CollectionItems = () => {
                 <br />
                 <span>
                   Floor price:{" "}
-                  {collection.price ? (
+                  {collectionMinPrice ? (
                     <b>
-                      {collection.price} {chains[collection?.chainId]?.currency}
+                      {collectionMinPrice}{" "}
+                      {chains[collection?.chainId]?.currency}
                     </b>
                   ) : (
                     <b>
@@ -180,6 +301,14 @@ const CollectionItems = () => {
         </div>
       </section>
       <Footer />
+      {
+        <Backdrop
+          sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+          open={processing}
+        >
+          <CircularProgress color="inherit" />
+        </Backdrop>
+      }
     </div>
   );
 };

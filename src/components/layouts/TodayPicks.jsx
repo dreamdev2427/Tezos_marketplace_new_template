@@ -67,7 +67,6 @@ const TodayPicks = (props) => {
           item.users = [{ avatar: result.data.list[i].creator_info.avatar }];
           list.push(item);
         }
-        console.log(list);
         if (list.length < 10) setShowLoadMore(false);
         if (reStart) {
           localStorage.setItem(
