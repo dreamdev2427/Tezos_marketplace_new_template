@@ -836,7 +836,7 @@ const ItemDetails = () => {
                         </span>
                       </span>
                     </div>
-                    {globalDetailNFT?.creator._id === currentUsr?._id && (
+                    {globalDetailNFT?.creator?._id === currentUsr?._id && (
                       <div className="right">
                         <Link
                           to="#"
