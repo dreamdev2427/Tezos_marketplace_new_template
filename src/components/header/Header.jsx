@@ -17,6 +17,7 @@ import {
   selectGlobalProvider,
   selectCurrentUser,
   changeAuthor,
+  changeDetailedUserInfo,
 } from "../../redux/reducers/auth.reducers.ts";
 import isEmpty from "../../utilities/isEmpty";
 import Web3Modal from "web3modal";
@@ -26,6 +27,7 @@ import {
   chains,
   platformChainIds,
   TEZOS_CHAIN_ID,
+  BACKEND_URL,
 } from "../../config";
 import { changeNetwork } from "../../InteractWithSmartContract/interact";
 import { connectTezosWallet } from "../../InteractWithSmartContract/tezosInteracts";
@@ -39,6 +41,8 @@ import {
   defaultEventCallbacks,
   ColorMode,
 } from "@airgap/beacon-sdk";
+import jwt_decode from "jwt-decode";
+import axios from "axios";
 
 export const web3Modal = new Web3Modal({
   network: "mainnet",
@@ -65,7 +69,6 @@ const Header = () => {
   const [Tezos, setTezos] = useState(
     new TezosToolkit("https://ghostnet.smartpy.io/")
   );
-  const [wallet, setWallet] = useState(null);
 
   useEffect(() => {
     if (globalAddress && globalChainId) {
@@ -105,6 +108,8 @@ const Header = () => {
     dispatch(changeGlobalProvider({}));
     dispatch(changeWalletStatus(false));
     dispatch(changeAuthor(""));
+    localStorage.removeItem("jwtToken");
+    localStorage.removeItem("chainId");
   };
 
   const headerRef = useRef(null);
@@ -164,39 +169,73 @@ const Header = () => {
     return "";
   };
 
-  useEffect(() => {
-    (async () => {
-      const wallet_instance = new BeaconWallet({
-        name: "Template",
-        preferredNetwork: NetworkType.GHOSTNET,
-        colorMode: ColorMode.LIGHT,
-        disableDefaultEvents: false, // Disable all events / UI. This also disables the pairing alert.
-        eventHandlers: {
-          // To keep the pairing alert, we have to add the following default event handlers back
-          [BeaconEvent.PAIR_INIT]: {
-            handler: defaultEventCallbacks.PAIR_INIT,
-          },
-          [BeaconEvent.PAIR_SUCCESS]: {
-            handler: (data) => {
-              return data.publicKey;
-            },
+  const connectTezos = async () => {
+    const wallet_instance = new BeaconWallet({
+      name: "Template",
+      preferredNetwork: NetworkType.GHOSTNET,
+      colorMode: ColorMode.LIGHT,
+      disableDefaultEvents: false, // Disable all events / UI. This also disables the pairing alert.
+      eventHandlers: {
+        // To keep the pairing alert, we have to add the following default event handlers back
+        [BeaconEvent.PAIR_INIT]: {
+          handler: defaultEventCallbacks.PAIR_INIT,
+        },
+        [BeaconEvent.PAIR_SUCCESS]: {
+          handler: (data) => {
+            return data.publicKey;
           },
         },
-      });
-      Tezos.setWalletProvider(wallet_instance);
-      setWallet(wallet_instance);
-    })();
-  }, [Tezos, dispatch]);
+      },
+    });
+    Tezos.setWalletProvider(wallet_instance);
+    await dispatch(
+      connectTezosWallet({ Tezos: Tezos, wallet: wallet_instance })
+    );
 
-  //wallet change
-  const handleConnect2Tezos = async () => {
     if (currentChainId !== TEZOS_CHAIN_ID) {
       dispatch(changeChainId(99999));
+      localStorage.setItem("chainId", TEZOS_CHAIN_ID.toString());
     }
-    await dispatch(connectTezosWallet({ Tezos, wallet }));
   };
 
+  useEffect(() => {
+    let token = localStorage.getItem("jwtToken");
+    let chainId = localStorage.getItem("chainId");
+    if (!token) return;
+
+    let decoded = { id: "", _doc: {} };
+    decoded = jwt_decode(token);
+    dispatch(changeAuthor(decoded._doc));
+
+    if (decoded.id) {
+      axios
+        .post(
+          `${BACKEND_URL}/api/users/findOne`,
+          { userId: decoded.id },
+          {
+            headers: {
+              "x-access-token": localStorage.getItem("jwtToken"),
+            },
+          }
+        )
+        .then((result) => {
+          dispatch(changeDetailedUserInfo(result.data.data));
+        })
+        .catch(() => {
+          console.log("Get detailed userInfo failed.");
+        });
+    }
+    if (chainId) {
+      if (chainId === TEZOS_CHAIN_ID.toString()) {
+        connectTezos();
+      } else {
+        switchNetwork(chainId);
+      }
+    }
+  }, []);
+
   const switchNetwork = async (chainId) => {
+    localStorage.setItem("chainId", chainId.toString());
     let changed = await changeNetwork(globalPrivider, chainId);
     if (changed.success === true) {
       var provider = await web3Modal.connect();
@@ -376,7 +415,7 @@ const Header = () => {
                         <Link
                           to="#"
                           onClick={handleOpenWalletDropdown}
-                          class="sc-button header-slider style style-1 wallet fl-button pri-1"
+                          className="sc-button header-slider style style-1 wallet fl-button pri-1"
                         >
                           <span>
                             {currentChainId === 0
@@ -396,20 +435,20 @@ const Header = () => {
                             <Link
                               onClick={() => {
                                 setWalletDropOpen(false);
-                                switchNetwork(platformChainIds[0])
+                                switchNetwork(platformChainIds[0]);
                               }}
                             >
-                              <i class="fas fa-wallet"></i>
+                              <i className="fas fa-wallet"></i>
                               <span>{chains[platformChainIds[0]].name}</span>
                             </Link>
                             <Link
                               onClick={() => {
                                 setWalletDropOpen(false);
-                                handleConnect2Tezos()
+                                connectTezos();
                               }}
                               className="mt-10"
                             >
-                              <i class="fas fa-wallet"></i>
+                              <i className="fas fa-wallet"></i>
                               <span>{chains[platformChainIds[1]].name}</span>
                             </Link>
                           </div>
@@ -489,7 +528,7 @@ const Header = () => {
                           <hr className="hr" />
                           <div className="links">
                             <Link to={`/author/${currentUsr?._id}`}>
-                              <i class="far fa-user"></i>
+                              <i className="far fa-user"></i>
                               <span> My profile</span>
                             </Link>
                             <Link className="mt-10" to={`/collectionList`}>

@@ -25,7 +25,7 @@ const Slider = (props) => {
         slidesPerView={1}
         navigation
         scrollbar={{ draggable: true }}
-        currentUsr={currentusr}
+        currentusr={currentusr}
       >
         {data.map((item, index) => (
           <SwiperSlide key={index} className={item.class}>

@@ -123,9 +123,4 @@ const Categories = () => {
     </Fragment>
   );
 };
-
-Categories.propTypes = {
-  data: PropTypes.array.isRequired,
-};
-
 export default Categories;
