@@ -82,9 +82,6 @@ const CollectionItems = () => {
   };
 
   const getCollectionList = (reStart, useStart) => {
-    let filterParams = JSON.parse(
-      localStorage.getItem("searchFilter").toString()
-    );
     let currentItemCount = localStorage.getItem("currentItemIndex");
     if (currentItemCount === null || currentItemCount === undefined) {
       localStorage.setItem("currentItemIndex", "0");
@@ -96,9 +93,6 @@ const CollectionItems = () => {
         reStart === true
           ? useStart + 10
           : Number(currentItemCount) + Number(10),
-      date: filterParams.date,
-      category: filterParams.category,
-      status: filterParams.status,
     };
     param.collId = collectionId;
     param.userId = currentUsr?._id;
@@ -115,14 +109,6 @@ const CollectionItems = () => {
       .post(`${BACKEND_URL}/api/collection/onSearchInACollection`, param)
       .then((result) => {
         var list = [];
-        let currentInfo = localStorage.getItem("hideCollections");
-        if (currentInfo === null || !currentInfo) currentInfo = "{}";
-        else currentInfo = JSON.parse(currentInfo.toString());
-
-        let currentInfo1 = localStorage.getItem("hideItems");
-        if (currentInfo1 === null || currentInfo1 === undefined)
-          currentInfo1 = "{}";
-        else currentInfo1 = JSON.parse(currentInfo1.toString());
         for (var i = 0; i < result.data.list.length; i++) {
           var item = result.data.list[i].item_info;
           item.isLiked = result.data.list[i].item_info.likes.includes(
@@ -205,7 +191,7 @@ const CollectionItems = () => {
       })
       .catch(() => {});
 
-      getCollectionList(true, 0);
+    getCollectionList(true, 0);
   }, [collectionId]);
 
   return (
