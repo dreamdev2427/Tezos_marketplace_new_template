@@ -110,6 +110,7 @@ const PopularCollectionItem = (props) => (
               <div className="media-images-box">
                 <img
                   src={`${ipfsUrl}${props.item?.collection_info?.bannerURL}`}
+                  style={{height: "250px", objectFit:"cover"}}
                   alt="Axies"
                 />
                 {/* <div className="bottom-media">

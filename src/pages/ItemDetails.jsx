@@ -120,24 +120,13 @@ const ItemDetails = () => {
         const detailOfItem = result.data?.data;
         dispatch(changeItemDetail(result.data?.data || {}));
 
-        if (isEmpty(currentUsr)) {
-          toast.warn("Please login first!");
-          setTimeout(() => {
-            navigate("/login");
-          }, 1500);
-          return;
-        }
-        if (walletStatus === false) {
-          toast.warn("Please connect your crypto wallet!");
-          return;
-        }
-        if (
-          (detailOfItem?.chain === TEZOS_CHAIN_ID &&
-            isEmpty(currentUsr?.tezosaddress)) ||
-          isEmpty(currentUsr?.address)
-        ) {
-          navigate("/account");
-        }
+        // if (
+        //   (detailOfItem?.chain === TEZOS_CHAIN_ID &&
+        //     isEmpty(currentUsr?.tezosaddress)) ||
+        //   isEmpty(currentUsr?.address)
+        // ) {
+        //   navigate("/account");
+        // }
       })
       .catch(() => {});
 
@@ -269,6 +258,10 @@ const ItemDetails = () => {
   const cofirmBuy = async () => {
     setVisibleModalPurchase(false);
     setProcessing(true);
+    if (walletStatus === false) {
+      toast.warn("Please connect your crypto wallet!");
+      return;
+    }
     let checkResut = await checkWalletAddrAndChainId();
     if (!checkResut) {
       setProcessing(false);
@@ -336,6 +329,10 @@ const ItemDetails = () => {
   //remove sale
   const removeSale = async () => {
     setProcessing(true);
+    if (walletStatus === false) {
+      toast.warn("Please connect your crypto wallet!");
+      return;
+    }
     if (globalDetailNFT?.owner?._id !== currentUsr?._id) {
       toast.warn("You are not the owner of this nft.");
       return;
@@ -422,6 +419,10 @@ const ItemDetails = () => {
   // put on sale
   const onPutSale = async (price, instant, period) => {
     setVisibleModalSale(false);
+    if (walletStatus === false) {
+      toast.warn("Please connect your crypto wallet!");
+      return;
+    }
     var aucperiod = instant === true ? 0 : period;
     if (Number(price) <= 0 || isNaN(price)) {
       toast.error("Invalid price.");
@@ -491,7 +492,10 @@ const ItemDetails = () => {
   };
   const onBid = async (bidPrice) => {
     setVisibleModalBid(false);
-
+    if (walletStatus === false) {
+      toast.warn("Please connect your crypto wallet!");
+      return;
+    }
     setProcessing(true);
     let checkResut = await checkWalletAddrAndChainId();
     if (!checkResut) {
@@ -564,7 +568,10 @@ const ItemDetails = () => {
 
   const onAccept = async () => {
     setVisibleModalAccept(false);
-
+    if (walletStatus === false) {
+      toast.warn("Please connect your crypto wallet!");
+      return;
+    }
     setProcessing(true);
     let checkResut = await checkWalletAddrAndChainId();
     if (!checkResut) {
@@ -617,7 +624,10 @@ const ItemDetails = () => {
 
   const burnToken = async () => {
     setVisibleModalBurn(false);
-
+    if (walletStatus === false) {
+      toast.warn("Please connect your crypto wallet!");
+      return;
+    }
     if (globalDetailNFT?.owner._id !== currentUsr?._id) {
       toast.warn("You are not the owner of this nft.");
       return;
@@ -703,7 +713,10 @@ const ItemDetails = () => {
 
   const transferToken = async (toAddr) => {
     setVisibleModalTransfer(false);
-
+    if (walletStatus === false) {
+      toast.warn("Please connect your crypto wallet!");
+      return;
+    }
     if (globalDetailNFT?.owner._id !== currentUsr?._id) {
       toast.warn("You are not the owner of this nft.");
       return;
