@@ -105,8 +105,9 @@ const Create = () => {
           toast.success("You 've created a new collection.");
           navigate("/collectionList");
         } else {
+          toast.error(response.data.message);
+          navigate("/collectionList");
           setProcessing(false);
-          toast.success(response.message);
         }
       })
       .catch(function (error) {
