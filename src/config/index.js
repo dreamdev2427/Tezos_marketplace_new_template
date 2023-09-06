@@ -26,7 +26,7 @@ export const chains = {
     name: "Avalanche Fuji",
     id: 43113,
     rpcURL: "https://data-seed-prebsc-1-s2.binance.org:8545/",
-    currency: "tAVAX",
+    currency: "AVAX",
     minimumTipAmount: 200,
     platformContractAddress: "0xBdB0135aE71b526da7C1dd76AD86aec8C4410f50",
     nftContractAddress: "0xaA5E04204b176B218a7924bB38F6d136074Af047",

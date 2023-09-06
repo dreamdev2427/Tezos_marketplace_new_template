@@ -310,7 +310,7 @@ const ItemDetails = () => {
     } else {
       let result = await buyNow(
         new Web3(globalProvider),
-        currentUsr?.address,
+        globalAccount,
         itemId,
         globalDetailNFT?.price,
         globalDetailNFT?.chainId || 1
@@ -371,7 +371,7 @@ const ItemDetails = () => {
     let iHaveit;
     iHaveit = await getBalanceOf(
       new Web3(globalProvider),
-      currentUsr?.address,
+      globalAccount,
       itemId,
       globalDetailNFT?.chainId || 1
     );
@@ -386,7 +386,7 @@ const ItemDetails = () => {
     }
     let result = await destroySale(
       new Web3(globalProvider),
-      currentUsr?.address,
+      globalAccount,
       itemId,
       globalDetailNFT?.chainId || 1
     );
@@ -459,7 +459,7 @@ const ItemDetails = () => {
 
     let result = await setApproveForAll(
       new Web3(globalProvider),
-      currentUsr?.address,
+      globalAccount,
       chains[globalDetailNFT?.chainId]?.platformContractAddress || "",
       globalDetailNFT?.chainId || 1
     );
@@ -469,9 +469,10 @@ const ItemDetails = () => {
       setProcessing(false);
       return;
     }
+    
     result = await singleMintOnSale(
       new Web3(globalProvider),
-      currentUsr?.address,
+      globalAccount,
       itemId,
       aucperiod * 24 * 3600,
       price,
@@ -552,7 +553,7 @@ const ItemDetails = () => {
     } else {
       let result = await placeBid(
         new Web3(globalProvider),
-        currentUsr?.address,
+        globalAccount,
         itemId,
         Number(bidPrice),
         globalDetailNFT?.chainId || 1
@@ -609,7 +610,7 @@ const ItemDetails = () => {
     } else {
       let result = await acceptOrEndBid(
         new Web3(globalProvider),
-        currentUsr?.address,
+        globalAccount,
         itemId,
         globalDetailNFT?.chainId || 1
       );
@@ -670,7 +671,7 @@ const ItemDetails = () => {
       } else {
         iHaveit = await getBalanceOf(
           new Web3(globalProvider),
-          currentUsr?.address,
+          globalAccount,
           globalDetailNFT?._id,
           globalDetailNFT?.chainId || 1
         );
@@ -692,7 +693,7 @@ const ItemDetails = () => {
 
         let result = await burnNFT(
           new Web3(globalProvider),
-          currentUsr?.address,
+          globalAccount,
           globalDetailNFT?._id,
           globalDetailNFT?.chainId || 1
         );
@@ -760,7 +761,7 @@ const ItemDetails = () => {
       } else {
         iHaveit = await getBalanceOf(
           new Web3(globalProvider),
-          currentUsr?.address,
+          globalAccount,
           globalDetailNFT?._id,
           globalDetailNFT?.chainId || 1
         );
@@ -781,7 +782,7 @@ const ItemDetails = () => {
         }
         let result = await transferNFT(
           new Web3(globalProvider),
-          currentUsr?.address,
+          globalAccount,
           toAddr,
           globalDetailNFT?._id,
           globalDetailNFT?.chainId || 1

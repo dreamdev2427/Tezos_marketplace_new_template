@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { BACKEND_URL, TEZOS_CHAIN_ID, ipfsUrl } from "../../config";
+import { BACKEND_URL, TEZOS_CHAIN_ID, chains, ipfsUrl } from "../../config";
 import avt from "../../assets/images/avatar/avt.png";
 import axios from "axios";
 
@@ -74,7 +74,7 @@ const CardNFT = (props) => {
               <h5>
                 {" "}
                 {props.item.price}{" "}
-                {props.item.chainId === TEZOS_CHAIN_ID ? "TEZ" : "ETH"}
+                {chains[props.item.chainId || 1]?.currency || "ETH"}
               </h5>
             </div>
           ) : (
@@ -85,7 +85,7 @@ const CardNFT = (props) => {
                 {props.item.bids.length > 0
                   ? props.item.bids[props.item.bids.length - 1].price
                   : props.item.price}{" "}
-                {props.item.chainId === TEZOS_CHAIN_ID ? "TEZ" : "ETH"}
+                {chains[props.item.chainId || 1]?.currency || "ETH"}
               </h5>
             </div>
           )

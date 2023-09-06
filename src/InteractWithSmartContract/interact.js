@@ -151,8 +151,8 @@ const getCurrentGasPrices = async (chainId) => {
   } catch (error) {
     let prices = {
       low: 18000000000,
-      medium: 16000000000,
-      high: 15000000000,
+      medium: 25000000000,
+      high: 35000000000,
     };
     return prices;
   }
@@ -337,7 +337,7 @@ export const singleMintOnSale = async (
 
     return {
       success: true,
-      message: "Succeed on minting a item",
+      message: "Succeed on list a item",
     };
   } catch (error) {
     return {

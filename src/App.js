@@ -26,10 +26,12 @@ function App() {
    })
 
   const fetchETHPrice = async () => {
-    const apiForETHPrice = "https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2&vs_currencies=usd";
-    const response = await axios.get(apiForETHPrice);
-    let ethPrice = response.data["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"].usd;
-    dispatch(changeETHPrice(Number(ethPrice)));
+    // const apiForETHPrice = "https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2&vs_currencies=usd";
+    const apiForAvalanche = "https://api.coingecko.com/api/v3/simple/price?ids=avalanche-2&vs_currencies=usd";
+    const response = await axios.get(apiForAvalanche);
+    // let ethPrice = response.data["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"].usd;
+    let avaxPrice = response.data["avalanche-2"].usd;
+    dispatch(changeETHPrice(Number(avaxPrice)));
   }
 
   useEffect(() => {    
