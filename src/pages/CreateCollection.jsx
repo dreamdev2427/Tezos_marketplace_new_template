@@ -8,7 +8,7 @@ import "react-tabs/style/react-tabs.css";
 import img1 from "../assets/images/box-item/image-box-6.jpg";
 import { useAppDispatch, useAppSelector } from "../redux/hooks.ts";
 import isEmpty from "../utilities/isEmpty";
-import { BACKEND_URL, CATEGORIES } from "../config";
+import { BACKEND_URL, CATEGORIES, TEZOS_CHAIN_ID } from "../config";
 import {
   selectCurrentChainId,
   selectCurrentUser,
@@ -152,10 +152,13 @@ const Create = () => {
         constractAddr: "",
       };
       const metauri = await pinJSONToIPFS(params);
-      let address = await dispatch(
-        createTezosCollection({ Tezos: tezosInstance, metadata: metauri })
-      );
-      params.constractAddr = address;
+      if (currentChainId === TEZOS_CHAIN_ID) {
+        let address = await dispatch(
+          createTezosCollection({ Tezos: tezosInstance, metadata: metauri })
+        );
+        params.constractAddr = address;
+      }
+
       saveCollection(params);
       setProcessing(false);
     } catch (error) {
@@ -297,7 +300,7 @@ const Create = () => {
                       src={bannerImg}
                       alt="Banner"
                       style={{
-                        height:"250px",
+                        height: "250px",
                         objectFit: "cover",
                       }}
                     />

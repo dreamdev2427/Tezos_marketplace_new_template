@@ -145,35 +145,6 @@ const CollectionItems = () => {
       });
   };
 
-  const itemsOfCollectionList = () => {
-    var params = { start: start, last: last, date: 0, colId: collectionId };
-
-    axios
-      .post(`${BACKEND_URL}/api/item/get_items_of_collection`, params)
-      .then((result) => {
-        if (isEmpty(result.data.data)) {
-          setViewNoMore(true);
-          setTimeout(() => {
-            setViewNoMore(false);
-          }, 2500);
-        }
-        if (start === 0) {
-          setItems(result.data.data);
-        } else {
-          let curItems = items;
-          let moreItems = [],
-            i;
-          moreItems = result.data.data;
-          if (moreItems.length > 0)
-            for (i = 0; i < moreItems.length; i++) curItems.push(moreItems[i]);
-          setItems(curItems);
-        }
-        setStart(last);
-        setLast(last + 8);
-      })
-      .catch(() => {});
-  };
-
   // for page refresh
   useEffect(() => {
     axios

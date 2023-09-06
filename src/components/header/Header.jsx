@@ -201,6 +201,7 @@ const Header = () => {
   useEffect(() => {
     let token = localStorage.getItem("jwtToken");
     let chainId = localStorage.getItem("chainId");
+
     if (!token) return;
 
     let decoded = { id: "", _doc: {} };
@@ -225,11 +226,14 @@ const Header = () => {
           console.log("Get detailed userInfo failed.");
         });
     }
-    if (chainId) {
-      if (chainId === TEZOS_CHAIN_ID.toString()) {
-        connectTezos();
-      } else {
-        switchNetwork(chainId);
+    if (currentChainId === 0) {
+      if (chainId) {
+        if (chainId === TEZOS_CHAIN_ID.toString()) {
+          connectTezos();
+        } else {
+          switchNetwork(parseInt(chainId));
+        }
+        dispatch(changeChainId(parseInt(chainId)));
       }
     }
   }, []);
@@ -237,6 +241,7 @@ const Header = () => {
   const switchNetwork = async (chainId) => {
     localStorage.setItem("chainId", chainId.toString());
     let changed = await changeNetwork(globalPrivider, chainId);
+
     if (changed.success === true) {
       var provider = await web3Modal.connect();
       var web3 = new Web3(provider);

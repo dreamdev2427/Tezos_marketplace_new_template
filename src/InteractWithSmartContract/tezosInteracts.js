@@ -24,7 +24,6 @@ export const connectTezosWallet = ({ wallet, Tezos }) => {
       Tezos.setWalletProvider(wallet);
 
       const activeAccount = await wallet.client.getActiveAccount();
-      console.log(activeAccount);
       if (!activeAccount) {
         await wallet.requestPermissions({
           network: {
