@@ -13,7 +13,7 @@ const Explore = () => {
           <div className="row">
             <div className="col-md-12">
               <div className="page-title-heading mg-bt-12">
-                <h1 className="heading text-center">Explore</h1>
+                <h1 className="heading text-center">All NFTs</h1>
               </div>
             </div>
           </div>

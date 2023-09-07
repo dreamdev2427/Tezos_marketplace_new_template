@@ -91,7 +91,9 @@ const Categories = () => {
                           <div className="slider-item">
                             <div className="sc-card-product">
                               <div className="card-media">
-                                <Link to="/item-details-01">
+                                <Link
+                                  to={`/ItemsCategory/${item.category.text}`}
+                                >
                                   <img src={nftsCatImgs[index % 4]} alt="Cat" />
                                 </Link>
                               </div>

@@ -52,18 +52,19 @@ const CollectionItems = () => {
 
     if (isCollectionOnSale === true) {
       let minPrice = 0;
-      for (let i = 1; i < items.length; i++) {
+      for (let i = 0; i < items.length; i++) {
         if (items[i].isSale === 0) continue;
         if (items[i]?.isSale === 2) {
           if (items[i].bids && items[i].bids.length > 0) {
             minPrice = items[i].bids[items[i].bids.length - 1].price;
+          } else {
+            minPrice = items[i]?.price;
           }
         } else {
           minPrice = items[i]?.price;
         }
         break;
       }
-
       for (let i = 0; i < items.length; i++) {
         if (items[i].isSale === 0) continue;
         if (items[i].isSale === 2) {

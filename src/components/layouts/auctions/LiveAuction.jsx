@@ -85,9 +85,13 @@ const LiveAuctionItem = (props) => (
   <div className="fl-item col-xl-3 col-lg-6 col-md-6">
     <div className="sc-card-product">
       <div className="card-media">
-        {/* <Link to={`/item-details/${props.item._id}`}> */}
-        <img src={`${ipfsUrl}${props.item.bannerURL}`} alt="NFT" />
-        {/* </Link> */}
+        <Link to={`/collectionItems/${props.item._id}`}>
+          <img
+            src={`${ipfsUrl}${props.item.bannerURL}`}
+            style={{ height: "250px" }}
+            alt="NFT"
+          />
+        </Link>
       </div>
       <div className="card-title">
         <h5>{props.item.name}</h5>

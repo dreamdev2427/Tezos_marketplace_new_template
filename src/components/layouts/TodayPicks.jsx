@@ -4,15 +4,18 @@ import { Link } from "react-router-dom";
 import CardModal from "./CardModal";
 import { Dropdown } from "react-bootstrap";
 import avt from "../../assets/images/avatar/avt.png";
-import { BACKEND_URL, TEZOS_CHAIN_ID, ipfsUrl } from "../../config";
+import { BACKEND_URL, CATEGORIES, TEZOS_CHAIN_ID, ipfsUrl } from "../../config";
 import axios from "axios";
 import { useAppSelector } from "../../redux/hooks";
 import { selectCurrentUser } from "../../redux/reducers/auth.reducers";
 import Spinner from "../Spinner/Spinner";
 import CardNFT from "./CardNFT";
+import { Backdrop, CircularProgress } from "@mui/material";
 
 const TodayPicks = (props) => {
-  const showMoreItems = () => {};
+  const showMoreItems = () => {
+    getCollectionList(false);
+  };
   const [showLoadMore, setShowLoadMore] = useState(true);
 
   const [processing, setProcessing] = useState(false);
@@ -24,26 +27,39 @@ const TodayPicks = (props) => {
   const [sortFilter, setSortFilter] = useState(0);
   const currentUsr = useAppSelector(selectCurrentUser);
 
+  // useEffect(() => {
+  //   getCollectionList(true);
+  // }, []);
+
   useEffect(() => {
-    getCollectionList(true);
-  }, []);
-
-  const getCollectionList = (reStart) => {
-    setProcessing(true);
-    if (reStart) setItems([]);
-
-    let currentItemCount = localStorage.getItem("currentItemCount");
-    if (currentItemCount === null || currentItemCount === undefined) {
-      localStorage.setItem("currentItemCount", "0");
-    }
-
+    localStorage.setItem("currentItemCount", "0");
     var param = {
-      start: reStart === true ? 0 : Number(currentItemCount),
-      last: reStart === true ? 10 : Number(currentItemCount) + Number(10),
       category: categoryFilter,
       sortmode: sortFilter,
       chain: chainFilter,
       status: statusFilter,
+    };
+    localStorage.setItem("searchFilter", JSON.stringify(param));
+    getCollectionList(true);
+  }, [categoryFilter, sortFilter, chainFilter, statusFilter]);
+
+  const getCollectionList = (reStart) => {
+    setProcessing(true);
+    if (reStart) setItems([]);
+    let filterParams = JSON.parse(
+      localStorage.getItem("searchFilter").toString()
+    );
+    let currentItemCount = localStorage.getItem("currentItemCount");
+    if (currentItemCount === null || currentItemCount === undefined) {
+      localStorage.setItem("currentItemCount", "0");
+    }
+    var param = {
+      start: reStart === true ? 0 : Number(currentItemCount),
+      last: reStart === true ? 10 : Number(currentItemCount) + Number(10),
+      category: filterParams.category,
+      sortmode: filterParams.sort,
+      chain: filterParams.chain,
+      status: filterParams.status,
     };
 
     axios
@@ -91,8 +107,10 @@ const TodayPicks = (props) => {
   };
   return (
     <Fragment>
-      <section className="tf-section sc-explore-1">
-        <Spinner isLoading={processing} />
+      <section
+        className="tf-section sc-explore-1"
+        style={{ paddingTop: "20px" }}
+      >
         <div className="themesflat-container">
           <div className="row">
             <div className="col-md-12">
@@ -101,15 +119,25 @@ const TodayPicks = (props) => {
                   <div id="item_category" className="dropdown">
                     <Dropdown>
                       <Dropdown.Toggle id="dropdown-basic">
-                        All categories
+                        By Categories
                       </Dropdown.Toggle>
 
                       <Dropdown.Menu style={{ margin: 0 }}>
-                        <Dropdown.Item href="#">Art</Dropdown.Item>
-                        <Dropdown.Item href="#">Games</Dropdown.Item>
-                        <Dropdown.Item href="#">Sports</Dropdown.Item>
-                        <Dropdown.Item href="#">Photography</Dropdown.Item>
-                        <Dropdown.Item href="#">Utility</Dropdown.Item>
+                        <Dropdown.Item
+                          href="#"
+                          onClick={() => setCategoryFilter(0)}
+                        >
+                          All
+                        </Dropdown.Item>
+                        {CATEGORIES?.map((cat, index) => (
+                          <Dropdown.Item
+                            key={"category_" + index}
+                            href="#"
+                            onClick={() => setCategoryFilter(index + 1)}
+                          >
+                            <span>{cat.text}</span>
+                          </Dropdown.Item>
+                        ))}
                       </Dropdown.Menu>
                     </Dropdown>
                   </div>
@@ -120,26 +148,58 @@ const TodayPicks = (props) => {
                       </Dropdown.Toggle>
 
                       <Dropdown.Menu style={{ margin: 0 }}>
-                        <Dropdown.Item href="#">On Auction</Dropdown.Item>
-                        <Dropdown.Item href="#">Instant Sale</Dropdown.Item>
+                        <Dropdown.Item
+                          href="#"
+                          onClick={() => setStatusFilter(0)}
+                        >
+                          All
+                        </Dropdown.Item>
+                        <Dropdown.Item
+                          href="#"
+                          onClick={() => setStatusFilter(2)}
+                        >
+                          On Auction
+                        </Dropdown.Item>
+                        <Dropdown.Item
+                          href="#"
+                          onClick={() => setStatusFilter(1)}
+                        >
+                          Instant Sale
+                        </Dropdown.Item>
                       </Dropdown.Menu>
                     </Dropdown>
                   </div>
                   <div id="all-items" className="dropdown">
                     <Dropdown>
                       <Dropdown.Toggle id="dropdown-basic">
-                        All Items
+                        By Chains
                       </Dropdown.Toggle>
 
                       <Dropdown.Menu style={{ margin: 0 }}>
-                        <Dropdown.Item href="#">Avalanche</Dropdown.Item>
-                        <Dropdown.Item href="#">Tezos</Dropdown.Item>
+                        <Dropdown.Item
+                          href="#"
+                          onClick={() => setChainFilter(0)}
+                        >
+                          All
+                        </Dropdown.Item>
+                        <Dropdown.Item
+                          href="#"
+                          onClick={() => setChainFilter(1)}
+                        >
+                          Avalanche
+                        </Dropdown.Item>
+                        <Dropdown.Item
+                          href="#"
+                          onClick={() => setChainFilter(2)}
+                        >
+                          Tezos
+                        </Dropdown.Item>
                       </Dropdown.Menu>
                     </Dropdown>
                   </div>
                 </div>
                 <div className="seclect-box style-2 box-right">
-                  <div id="artworks" className="dropdown">
+                  {/* <div id="artworks" className="dropdown">
                     <Dropdown>
                       <Dropdown.Toggle id="dropdown-basic">
                         All Artworks
@@ -153,7 +213,7 @@ const TodayPicks = (props) => {
                         <Dropdown.Item href="#">Papercut</Dropdown.Item>
                       </Dropdown.Menu>
                     </Dropdown>
-                  </div>
+                  </div> */}
                   <div id="sort-by" className="dropdown">
                     <Dropdown>
                       <Dropdown.Toggle id="dropdown-basic">
@@ -161,8 +221,18 @@ const TodayPicks = (props) => {
                       </Dropdown.Toggle>
 
                       <Dropdown.Menu style={{ margin: 0 }}>
-                        <Dropdown.Item href="#">Top rate</Dropdown.Item>
-                        <Dropdown.Item href="#">Low rate</Dropdown.Item>
+                        <Dropdown.Item
+                          href="#"
+                          onClick={() => setSortFilter(1)}
+                        >
+                          Top rate
+                        </Dropdown.Item>
+                        <Dropdown.Item
+                          href="#"
+                          onClick={() => setSortFilter(2)}
+                        >
+                          Low rate
+                        </Dropdown.Item>
                       </Dropdown.Menu>
                     </Dropdown>
                   </div>
@@ -192,12 +262,16 @@ const TodayPicks = (props) => {
           </div>
         </div>
       </section>
+      {
+        <Backdrop
+          sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+          open={processing}
+        >
+          <CircularProgress color="inherit" />
+        </Backdrop>
+      }
     </Fragment>
   );
-};
-
-TodayPicks.propTypes = {
-  data: PropTypes.array.isRequired,
 };
 
 export default TodayPicks;
