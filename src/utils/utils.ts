@@ -11,6 +11,22 @@ export async function getSystemTime(): Promise<number> {
   return 0;
 }
 
+export const copyToClipboard = (data: any) => {
+  if (navigator.clipboard && window.isSecureContext) {
+    // navigator clipboard api method'
+    return navigator.clipboard.writeText(data);
+  } else {
+    var textField = document.createElement("textarea");
+    textField.innerText = data;
+    textField.style.position = "fixed";
+    textField.style.left = "-999999px";
+    textField.style.top = "-999999px";
+    document.body.appendChild(textField);
+    textField.select();
+    document.execCommand("copy");
+    textField.remove();
+  }
+};
 export function isValidEthereumAddress(address: any) {
   // Ethereum address pattern (42-character hexadecimal string starting with "0x")
   const pattern = /^0x[0-9a-fA-F]{40}$/;

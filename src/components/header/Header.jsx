@@ -43,6 +43,7 @@ import {
 } from "@airgap/beacon-sdk";
 import jwt_decode from "jwt-decode";
 import axios from "axios";
+import { copyToClipboard } from "../../utils/utils";
 
 export const web3Modal = new Web3Modal({
   network: "mainnet",
@@ -526,8 +527,13 @@ const Header = () => {
                               {connected === false && "No wallet"}
                               {connected === true && compressedAccount}
                             </span>
-                            <Link to="/" className="ml-2">
-                              <i className="fal fa-copy"></i>
+                            <Link to="#" className="ml-2">
+                              <i
+                                className="fal fa-copy"
+                                onClick={() => {
+                                  copyToClipboard(globalAddress);
+                                }}
+                              ></i>
                             </Link>
                           </div>
                           <hr className="hr" />
