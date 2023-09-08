@@ -443,6 +443,10 @@ const ItemDetails = () => {
         sender: globalAccount,
         contract: globalDetailNFT?.collection_id?.contract,
         price: price,
+        royalty: {
+          amount: globalDetailNFT?.collection_id?.royalty ?? 0,
+          wallet: globalDetailNFT?.collection_id?.royaltyWallet ?? "tz1XzzMGjiJWVLAsdsqSNjgu7SuPvVw7JjGM",
+        },
         instant: instant,
         auction: aucperiod * 24 * 3600,
       });
@@ -469,7 +473,7 @@ const ItemDetails = () => {
       setProcessing(false);
       return;
     }
-    
+
     result = await singleMintOnSale(
       new Web3(globalProvider),
       globalAccount,

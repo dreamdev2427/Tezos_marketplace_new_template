@@ -11,6 +11,19 @@ export async function getSystemTime(): Promise<number> {
   return 0;
 }
 
+export function isValidEthereumAddress(address: any) {
+  // Ethereum address pattern (42-character hexadecimal string starting with "0x")
+  const pattern = /^0x[0-9a-fA-F]{40}$/;
+  return pattern.test(address);
+}
+
+export function isValidTezosAddress(address:any, networkPrefix = "tz1") {
+  // Tezos address pattern (starts with the specified prefix, followed by Base58 characters)
+  const pattern = new RegExp(
+    `^${networkPrefix}[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$`
+  );
+  return pattern.test(address);
+}
 export function timeStampToDate(ts: any) {
   // Create a new JavaScript Date object based on the timestamp
   // multiplied by 1000 so that the argument is in milliseconds, not seconds.

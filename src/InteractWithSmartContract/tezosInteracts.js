@@ -13,7 +13,7 @@ import {
 
 export const tezosconfig = {
   factoryAddress: "KT1DxXM4ixDoQJwWVUzP7pBoYryWoWPhijJB",
-  auctionAddress: "KT19YyJYNzKWSfmjxsppVwaEee2J1Uz5f1pM", //"KT1Bd9gbaka5S5XtfET1w7DKbuNduhfFSmht",
+  auctionAddress: "KT1LEkH8uaEesHHsGA97UGo7YYWTxFCMbgGi",//before royalty"KT19YyJYNzKWSfmjxsppVwaEee2J1Uz5f1pM", //"KT1Bd9gbaka5S5XtfET1w7DKbuNduhfFSmht",
   contractAddress: "KT1PPMX8reWbzg4QWeLx3EzMLaLRN9YgA6U7", //"KT1BHLs7CxuLAGnAmSygd1iSG4AEoioYYDd4",
   tokenAddress: "KT1E6rci16DnNv3Cjs9sVYMbPZiQnFWvtkj2", //"KT1DWALB19EzvwKu7uomRsMJZBhYqFL9sEn5",
 };
@@ -23,7 +23,7 @@ export const connectTezosWallet = ({ wallet, Tezos }) => {
     try {
       Tezos.setWalletProvider(wallet);
 
-      const activeAccount = await wallet.client.getActiveAccount();
+      const activeAccount = false;//await wallet.client.getActiveAccount();
       if (!activeAccount) {
         await wallet.requestPermissions({
           network: {
@@ -357,6 +357,7 @@ export const listTezosNFT = async ({
   price,
   instant,
   auction,
+  royalty
 }) => {
   try {
     const token_contract = await Tezos.wallet.at(contract);
@@ -380,6 +381,12 @@ export const listTezosNFT = async ({
           0, // current price
           Math.floor(Date.now() / 1000) + Math.floor(auction), //end time
           sender, // highest bidder
+          [
+            {
+              amount: royalty.amount,
+              recipient: royalty.wallet
+            }
+          ],
           Math.floor(Date.now() / 1000), // start time
           contract, // Token(address)
           id // Token(token_id)
@@ -388,7 +395,18 @@ export const listTezosNFT = async ({
       await listOp.confirmation();
     } else {
       const listOp = await auction_contract.methods
-        .put_on_sale(sender, contract, id, price * 1000000)
+        .put_on_sale(
+          sender,
+          price * 1000000,
+          [
+            {
+              amount: royalty.amount,
+              recipient: royalty.wallet
+            }
+          ],
+          contract,
+          id
+        )
         .send();
       await listOp.confirmation();
     }

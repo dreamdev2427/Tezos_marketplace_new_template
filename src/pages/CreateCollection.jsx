@@ -19,6 +19,7 @@ import { changeConsideringCollectionId } from "../redux/reducers/collection.redu
 import { pinFileToIPFS, pinJSONToIPFS } from "../utils/pinatasdk";
 import { createTezosCollection } from "../InteractWithSmartContract/tezosInteracts";
 import { Backdrop, CircularProgress } from "@mui/material";
+import { isValidEthereumAddress, isValidTezosAddress } from "../utils/utils";
 
 const Create = () => {
   const categoriesOptions = CATEGORIES;
@@ -28,6 +29,8 @@ const Create = () => {
   const [logoImg, setLogoImg] = useState("");
   const [bannerImg, setBannerImg] = useState("");
   const [textName, setTextName] = useState("");
+  const [royalty, setRoyalty] = useState("");
+  const [royaltyWallet, setRoyaltyWallet] = useState("");
   const [textDescription, setTextDescription] = useState("");
   const [categories, setCategories] = useState(categoriesOptions[0]);
   const [floorPrice, setFloorPrice] = useState(0);
@@ -134,6 +137,26 @@ const Create = () => {
       toast.warn("Collection name can not be empty.");
       return;
     }
+    if (Number(royalty) >= 20 || Number(royalty) <= 0) {
+      toast.warn("Invalid Royalty");
+      return;
+    }
+
+    if (
+      currentChainId === TEZOS_CHAIN_ID &&
+      !isValidTezosAddress(royaltyWallet)
+    ) {
+      toast.warn("Invalid Address");
+      return;
+    }
+    if (
+      currentChainId !== TEZOS_CHAIN_ID &&
+      !isValidEthereumAddress(royaltyWallet)
+    ) {
+      toast.warn("Invalid Address");
+      return;
+    }
+
     try {
       setProcessing(true);
 
@@ -150,6 +173,8 @@ const Create = () => {
         owner: currentUsr._id,
         metaData: metaArry,
         chainId: currentChainId,
+        royalty: Number(royalty*10000),
+        royaltyWallet: royaltyWallet,
         constractAddr: "",
       };
       const metauri = await pinJSONToIPFS(params);
@@ -350,6 +375,26 @@ const Create = () => {
                       setTextDescription(event.target.value);
                     }}
                   ></textarea>
+                  <h4 className="title-create-item">Royalty</h4>
+                  <div className="flex flex-gap-2">
+                    <input
+                      style={{ width: "30%" }}
+                      type="number"
+                      value={royalty}
+                      placeholder="Max: 20%"
+                      onChange={(event) => {
+                        setRoyalty(event.target.value);
+                      }}
+                    />
+                    <input
+                      type="text"
+                      value={royaltyWallet}
+                      placeholder="Set Royalty Wallet"
+                      onChange={(event) => {
+                        setRoyaltyWallet(event.target.value);
+                      }}
+                    />
+                  </div>
                   <h4 className="title-create-item">Category</h4>
 
                   <div className="row-form style-3">

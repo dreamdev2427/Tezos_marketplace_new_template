@@ -333,7 +333,9 @@ const CreateItem = () => {
                 Successfully created an item. You can see items at{" "}
                 <span
                   style={{ color: "#00f" }}
-                  onClick={() => navigate(`/collectionItems/${params.collectionId}`)}
+                  onClick={() =>
+                    navigate(`/collectionItems/${params.collectionId}`)
+                  }
                 >
                   here
                 </span>
@@ -472,7 +474,9 @@ const CreateItem = () => {
         <div className="themesflat-container">
           <div className="row">
             <div className="col-md-12">
-              <h2 className="tf-title-heading style-1 ct mt-2">Create New Item</h2>
+              <h2 className="tf-title-heading style-1 ct mt-2">
+                Create New Item
+              </h2>
             </div>
             <div className="col-xl-3 col-lg-6 col-md-6 col-12">
               <h4 className="title-create-item">Preview item</h4>
@@ -563,7 +567,15 @@ const CreateItem = () => {
                               value={cat._id}
                               onChange={(e) => handleCheckboxChange(e)}
                             />
-                            <p>{cat?.name}</p>
+                            <p
+                              style={{
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                            >
+                              {cat?.name}
+                            </p>
 
                             {/* <span className="btn-radiobox"></span> */}
                           </label>
