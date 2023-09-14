@@ -33,7 +33,7 @@ const CardNFT = (props) => {
       <div className="card-title">
         <h5 className="style2" onClick={updateViews}>
           <Link to={`/item-details/${props.item._id}`}>
-            {props.item.description || "No name"}
+            {props.item.name || "No name"}
           </Link>
         </h5>
         <div className="tags">
